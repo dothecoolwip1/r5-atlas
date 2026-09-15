@@ -44,6 +44,46 @@ export async function ungzip(arrayBuffer) {
   return await new Response(stream).arrayBuffer();
 }
 
+export async function extractPackFromZip(arrayBuffer) {
+  const bytes = new Uint8Array(arrayBuffer);
+  const view = new DataView(arrayBuffer);
+  const min = Math.max(0, bytes.length - 65557);
+  let eocd = -1;
+  for (let i = bytes.length - 22; i >= min; i--) {
+    if (view.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('Invalid ZIP file.');
+  const entries = view.getUint16(eocd + 10, true);
+  let cursor = view.getUint32(eocd + 16, true);
+  const decoder = new TextDecoder('utf-8');
+  for (let n = 0; n < entries; n++) {
+    if (view.getUint32(cursor, true) !== 0x02014b50) throw new Error('Invalid ZIP directory.');
+    const method = view.getUint16(cursor + 10, true);
+    const compressedSize = view.getUint32(cursor + 20, true);
+    const nameLength = view.getUint16(cursor + 28, true);
+    const extraLength = view.getUint16(cursor + 30, true);
+    const commentLength = view.getUint16(cursor + 32, true);
+    const localOffset = view.getUint32(cursor + 42, true);
+    const name = decoder.decode(bytes.subarray(cursor + 46, cursor + 46 + nameLength));
+    if (name.endsWith('alberta-ats-v41-lsd.bin.gz')) {
+      if (view.getUint32(localOffset, true) !== 0x04034b50) throw new Error('Invalid ZIP entry.');
+      const localNameLength = view.getUint16(localOffset + 26, true);
+      const localExtraLength = view.getUint16(localOffset + 28, true);
+      const start = localOffset + 30 + localNameLength + localExtraLength;
+      const compressed = arrayBuffer.slice(start, start + compressedSize);
+      if (method === 0) return compressed;
+      if (method === 8) {
+        if (!('DecompressionStream' in globalThis)) throw new Error('This browser cannot decompress ZIP files.');
+        const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+        return await new Response(stream).arrayBuffer();
+      }
+      throw new Error('Unsupported ZIP compression method.');
+    }
+    cursor += 46 + nameLength + extraLength + commentLength;
+  }
+  throw new Error('The ZIP does not contain the Alberta LSD data pack.');
+}
+
 export class AlbertaLSDDataPack {
   constructor(arrayBuffer) {
     this.buffer = arrayBuffer;
