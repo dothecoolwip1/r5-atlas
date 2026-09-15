@@ -1,0 +1,48 @@
+name: Inspect existing LSD lookup
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/inspect-lsd.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect current bundled app lookup code
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          text = Path('index.html').read_text(encoding='utf-8')
+          terms = [
+              'Coordinate not downloaded',
+              'coordinate record',
+              'Import a matching pack',
+              'Atlas version',
+              'download coordinate',
+              'pid',
+              'lsd',
+              'legal land',
+              'township',
+          ]
+          print('INDEX_BYTES', len(text.encode('utf-8')))
+          print('INDEX_CHARS', len(text))
+          for term in terms:
+              matches = list(re.finditer(re.escape(term), text, re.I))
+              print(f'\n=== TERM {term!r}: {len(matches)} matches ===')
+              for i, m in enumerate(matches[:20], 1):
+                  a=max(0,m.start()-1200); b=min(len(text),m.end()+2200)
+                  snippet=text[a:b]
+                  print(f'\n--- match {i} at {m.start()} ---\n{snippet}\n--- end ---')
+          funcs = re.findall(r'(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)', text)
+          interesting=[f for f in funcs if re.search(r'lsd|pid|coord|parcel|ats|land|pack|lookup|convert',f,re.I)]
+          print('\n=== INTERESTING FUNCTION NAMES ===')
+          print('\n'.join(dict.fromkeys(interesting)))
+          PY
