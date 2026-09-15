@@ -1,0 +1,40 @@
+{
+  "format": "r5-lsd-pack",
+  "formatVersion": 1,
+  "sourceCoordinateSha256": "2af1d85017000e4d6d326bd9f96224909f8f028922d8992dfef803c56af14347",
+  "sourceName": "Government of Alberta ATS v4.1 LSD polygons",
+  "sourceUrl": "https://geospatial.alberta.ca/titan/rest/services/ags_apps/ags_apps_alberta_township_system/MapServer/3",
+  "datasetVersion": "ATS v4.1",
+  "retrievedDate": "2026-09-15",
+  "sourceLicense": "Open Government Licence Alberta",
+  "crs": "EPSG:4326",
+  "coordinateOrder": "latitude,longitude",
+  "coordinateScale": 1000000,
+  "pointDefinition": "centroid of each LSD polygon, moved inside when a centroid falls outside",
+  "roadAllowanceHandling": "records with RA values are excluded",
+  "sourceFeatureCount": 4026248,
+  "sourceGeometryPrecision": 7,
+  "fullPrecisionRepairs": [
+    {
+      "objectId": 1191980,
+      "page": "0848000.json.gz",
+      "reason": "Zero area polygon",
+      "requestedGeometryPrecision": null,
+      "retrievedDate": "2026-09-15"
+    }
+  ],
+  "coverage": "province",
+  "buildStats": {
+    "features": 4026248,
+    "roadAllowanceFeatures": 0,
+    "geometryErrors": 0,
+    "sections": 252578,
+    "records": 4026248,
+    "ambiguousRecords": 0,
+    "duplicateSourceRows": 0,
+    "interiorPoints": 29
+  },
+  "dataBytes": 14921013,
+  "gzipBytes": 6413215,
+  "packSha256": "70a4f54d9df816f74828b6302bdbce9f35d74926cb31e12802e74bd620ccf3c6"
+}
