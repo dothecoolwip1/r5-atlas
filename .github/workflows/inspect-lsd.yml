@@ -22,75 +22,12 @@ jobs:
           LSD_FETCH_WORKERS: '24'
         run: |
           python .github/lsd-build/build_lsd_pack.py testing/data/alberta-ats-v41-lsd.bin
-          python - <<'PY'
-          from pathlib import Path
-          import hashlib, json
-          raw = Path('testing/data/alberta-ats-v41-lsd.bin')
-          manifest = Path('testing/data/alberta-ats-v41-lsd.manifest.json')
-          report = json.loads(manifest.read_text())
-          expected = '70a4f54d9df816f74828b6302bdbce9f35d74926cb31e12802e74bd620ccf3c6'
-          actual = hashlib.sha256(raw.read_bytes()).hexdigest()
-          print('pack sha256:', actual)
-          print('records:', report['buildStats']['records'])
-          if actual != expected:
-              raise SystemExit('Rebuilt pack does not exactly match the supplied converter data pack.')
-          if report['buildStats']['records'] != 4026248:
-              raise SystemExit('Unexpected LSD record count.')
-          raw.unlink()
-          PY
+          echo '70a4f54d9df816f74828b6302bdbce9f35d74926cb31e12802e74bd620ccf3c6  testing/data/alberta-ats-v41-lsd.bin' | sha256sum -c -
+          python -c "import json; d=json.load(open('testing/data/alberta-ats-v41-lsd.manifest.json')); assert d['buildStats']['records']==4026248"
+          rm testing/data/alberta-ats-v41-lsd.bin
 
       - name: Change only the LSD lookup in the testing copy
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          root = Path('index.html').read_text(encoding='utf-8')
-          p = Path('testing/index.html')
-          text = p.read_text(encoding='utf-8')
-          if text != root:
-              raise SystemExit('testing/index.html is not an exact copy of the production tracker before patching.')
-
-          marker = "const ATS_SERVICE='https://geospatial.alberta.ca/titan/rest/services/base/alberta_township_system/MapServer';"
-          marker_pos = text.index(marker)
-          script_pos = text.rfind('<script', 0, marker_pos)
-          if script_pos < 0:
-              raise SystemExit('Could not locate the original tracker script block.')
-          text = text[:script_pos] + '<script src="lsd-converter.js"></script>\n' + text[script_pos:]
-
-          start = text.index('async function lookupATS(p){')
-          end = text.index('async function lookupQuarter(p){', start)
-          replacement = r'''let offlineLsdConverterPromise;
-async function getOfflineLsdConverter(){
-  if(!offlineLsdConverterPromise){
-    offlineLsdConverterPromise=(async()=>{
-      const response=await fetch('data/alberta-ats-v41-lsd.bin.gz');
-      if(!response.ok)throw Error('LSD coordinate data could not be loaded.');
-      return LSDConverter.createConverterFromGzip(await response.arrayBuffer());
-    })();
-  }
-  return offlineLsdConverterPromise;
-}
-async function lookupATS(p){
-  const converter=await getOfflineLsdConverter();
-  const description=`${String(p.lsd).padStart(2,'0')}-${String(p.sec).padStart(2,'0')}-${String(p.twp).padStart(3,'0')}-${String(p.rge).padStart(2,'0')}-W${p.mer}`;
-  const result=converter.convert(description);
-  if(result.status!=='ok')throw Error(result.message||'LSD not found.');
-
-  // Geometry is retained when online so every existing map/well feature keeps
-  // behaving exactly as before. Coordinates always come from the new local pack.
-  let geometry=null;
-  if(typeof navigator==='undefined'||navigator.onLine!==false){
-    try{
-      const where=`LSD=${p.lsd} AND SEC=${p.sec} AND TWP=${p.twp} AND RGE=${p.rge} AND M=${p.mer}`;
-      const d=await fetchJson(atsUrl('/5/query',{f:'json',where,returnGeometry:'true',outSR:'4326',outFields:'*'}));
-      geometry=d.features?.[0]?.geometry||null;
-    }catch{}
-  }
-  return{lat:result.latitude,lng:result.longitude,ats:canonical(p),geometry,quarter:''}
-}
-'''
-          text = text[:start] + replacement + text[end:]
-          p.write_text(text, encoding='utf-8')
-          PY
+        run: python .github/lsd-build/patch_testing.py
 
       - name: Verify production was not changed
         run: |
