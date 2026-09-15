@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>R5 Atlas LSD Converter Test</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0d1720;color:#eef5f7;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.wrap{max-width:760px;margin:auto;padding:28px 18px 60px}.card{background:#142431;border:1px solid #29404f;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 12px 32px rgba(0,0,0,.18)}h1{font-size:28px;margin:0 0 8px}.muted{color:#a9bdc9}.status{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:#203746;color:#d8eaf3;font-weight:650;font-size:14px}.dot{width:9px;height:9px;border-radius:50%;background:#e5a93b}.status.ready .dot{background:#4bc58b}.status.error .dot{background:#ef6d6d}label{display:block;margin:14px 0 7px;font-weight:700}input[type=text]{width:100%;font-size:18px;padding:14px 15px;border-radius:12px;border:1px solid #3d5666;background:#0f1e28;color:#fff;outline:none}input[type=file]{width:100%;padding:12px;border:1px dashed #4a6677;border-radius:12px;background:#10212c;color:#ccdbe3}button,a.button{appearance:none;border:0;border-radius:12px;padding:13px 16px;font-weight:750;font-size:16px;cursor:pointer;text-decoration:none;display:inline-flex;justify-content:center;align-items:center;background:#f0a642;color:#1c1407}button.secondary,a.secondary{background:#243b49;color:#e8f2f6;border:1px solid #3c5969}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.result{font-size:17px;line-height:1.6}.coords{font-size:26px;font-weight:800;letter-spacing:.2px;margin:8px 0}.small{font-size:13px;color:#99afbc}.sample-grid{display:flex;flex-wrap:wrap;gap:8px}.sample{padding:8px 10px;border-radius:10px;background:#203745;color:#dce9ef;border:1px solid #385263;font-size:13px;cursor:pointer}.hide{display:none}.good{color:#62d9a1}.bad{color:#ff8989}@media(max-width:520px){.actions{grid-template-columns:1fr}.coords{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>R5 Atlas LSD Converter Test</h1>
+  <p class="muted">Isolated test page for the replacement Alberta LSD coordinate engine. Production files are not changed by this page.</p>
+
+  <div class="card">
+    <div id="packStatus" class="status"><span class="dot"></span><span>Sample mode ready</span></div>
+    <p class="muted">Sample mode lets you test the page immediately. To test any Alberta LSD, load <strong>alberta-ats-v41-lsd.bin.gz</strong> from the replacement package.</p>
+    <label for="packFile">Full Alberta data pack</label>
+    <input id="packFile" type="file" accept=".gz,.bin,application/gzip,application/octet-stream">
+    <div class="actions"><button id="loadPack" class="secondary">Load selected pack</button><button id="clearPack" class="secondary">Return to sample mode</button></div>
+  </div>
+
+  <div class="card">
+    <label for="lsd">Legal land description</label>
+    <input id="lsd" type="text" value="01-01-050-01-W5" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <div class="actions"><button id="convert">Convert LSD</button><a id="maps" class="button secondary hide" target="_blank" rel="noopener">Open in Google Maps</a></div>
+    <div id="result" class="result" style="margin-top:18px"></div>
+  </div>
+
+  <div class="card">
+    <strong>Built in samples</strong>
+    <p class="muted">These are fixed reference points extracted from the same ATS v4.1 pack. They make it easy to verify the GitHub test page before loading the full data file.</p>
+    <div id="samples" class="sample-grid"></div>
+  </div>
+</div>
+<script type="module">
+import {AlbertaLSDDataPack, parseLSD, ungzip} from './converter.js';
+
+const sampleRows = [
+['01-01-001-01-W4',49.001595,-110.007862],['01-01-025-10-W4',51.097883,-111.263783],['01-01-050-20-W4',53.281413,-112.785013],['01-01-075-10-W4',55.462813,-111.406565],['01-01-100-20-W4',57.644355,-113.128075],['01-01-125-10-W4',59.824834,-111.57834],['01-01-001-01-W5',49.001436,-114.004096],['01-01-025-10-W5',51.098205,-115.260245],['01-01-050-01-W5',53.281478,-114.005021],['01-01-050-20-W5',53.281544,-116.783652],['01-01-075-10-W5',55.463308,-115.401781],['01-01-100-20-W5',57.644781,-117.123396],['01-01-125-10-W5',59.825033,-115.574477],['01-01-050-01-W6',53.281389,-118.003262],['01-01-050-10-W6',53.281374,-119.319279]
+];
+const sampleMap = new Map(sampleRows.map(r=>[r[0],{latitude:r[1],longitude:r[2]}]));
+let pack = null;
+const $=id=>document.getElementById(id);
+
+function setStatus(text,type=''){
+  $('packStatus').className='status'+(type?' '+type:'');
+  $('packStatus').querySelector('span:last-child').textContent=text;
+}
+function render(r){
+  $('maps').classList.add('hide');
+  if(r.status!=='ok'){
+    $('result').innerHTML=`<div class="bad"><strong>${escapeHtml(r.status.replaceAll('_',' '))}</strong></div><div>${escapeHtml(r.message||'No result.')}</div>`;
+    return;
+  }
+  $('result').innerHTML=`<div class="good"><strong>${escapeHtml(r.normalized)}</strong></div><div class="coords">${r.latitude.toFixed(6)}, ${r.longitude.toFixed(6)}</div><div>PID: ${escapeHtml(r.pid)}</div><div class="small">${escapeHtml(r.pointType||'reference sample')} ${r.source?` · ${escapeHtml(r.source)}`:''}</div>`;
+  $('maps').href=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.latitude+','+r.longitude)}`;
+  $('maps').classList.remove('hide');
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function convert(){
+  const value=$('lsd').value;
+  if(pack){ render(pack.convert(value)); return; }
+  const parsed=parseLSD(value);
+  if(parsed.status!=='ok'){render(parsed);return;}
+  const sample=sampleMap.get(parsed.normalized);
+  if(!sample){render({...parsed,status:'missing_record',message:'That LSD is not in the small built in sample. Load the full Alberta data pack above to test any LSD.'});return;}
+  render({...parsed,...sample,status:'ok',pointType:'reference sample'});
+}
+
+$('convert').addEventListener('click',convert);
+$('lsd').addEventListener('keydown',e=>{if(e.key==='Enter')convert();});
+$('loadPack').addEventListener('click',async()=>{
+  const file=$('packFile').files[0];
+  if(!file){setStatus('Choose the .bin.gz data pack first','error');return;}
+  try{
+    setStatus('Loading and validating full Alberta pack');
+    let buf=await file.arrayBuffer();
+    if(file.name.toLowerCase().endsWith('.gz')) buf=await ungzip(buf);
+    pack=new AlbertaLSDDataPack(buf);
+    setStatus(`Full pack ready: ${pack.records.toLocaleString()} LSD records`,'ready');
+    convert();
+  }catch(err){pack=null;setStatus(err.message||String(err),'error');}
+});
+$('clearPack').addEventListener('click',()=>{pack=null;$('packFile').value='';setStatus('Sample mode ready');convert();});
+for(const [name] of sampleRows){
+  const b=document.createElement('button');b.className='sample';b.textContent=name;b.addEventListener('click',()=>{$('lsd').value=name;convert();});$('samples').appendChild(b);
+}
+convert();
+</script>
+</body>
+</html>
