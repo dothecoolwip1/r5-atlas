@@ -13,7 +13,7 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Probe Uptodown API transports
+      - name: Probe current Uptodown API client version
         shell: bash
         run: |
           set -u
@@ -23,24 +23,15 @@ jobs:
           hour=int(time.time()//3600*3600)
           key=hashlib.sha256((secret+str(hour)).encode()).hexdigest()
           open('/tmp/key','w').write(key)
-          print('apikey generated')
           PY
           KEY=$(cat /tmp/key)
           UA='Dalvik/2.1.0 (Linux; U; Android 14; SM-G955F Build/AP2A.240805.005)'
-          PATHQ='/eapi/apps/byPackagename/com.Rocanda.LandTrackerPro'
-          for spec in \
-            'normal|https://www.uptodown.app' \
-            'pinned|https://www.uptodown.app|51.210.117.112' \
-            'origin-ip|https://51.210.117.112' \
-            'api-domain|https://api.uptodown.com'; do
-            IFS='|' read -r name base ip <<< "$spec"
-            echo "=== $name ==="
-            args=(-sS -D /tmp/h -o /tmp/b --max-time 30 -A "$UA" -H 'Identificador: Uptodown_Android' -H 'Identificador-Version: 707' -H "APIKEY: $KEY")
-            if [ "$name" = pinned ]; then args+=(--resolve "www.uptodown.app:443:$ip"); fi
-            if [ "$name" = origin-ip ]; then args+=(-k -H 'Host: www.uptodown.app'); fi
-            curl "${args[@]}" "$base$PATHQ" || true
+          URL='https://www.uptodown.app/eapi/apps/byPackagename/com.Rocanda.LandTrackerPro'
+          for V in 738 737 736 735 734 733 732 731 730; do
+            echo "=== version $V ==="
+            curl -sS -D /tmp/h -o /tmp/b --max-time 30 -A "$UA" \
+              -H 'Identificador: Uptodown_Android' -H "Identificador-Version: $V" -H "APIKEY: $KEY" "$URL" || true
             head -1 /tmp/h 2>/dev/null || true
-            wc -c /tmp/b 2>/dev/null || true
-            head -c 240 /tmp/b 2>/dev/null || true
+            head -c 300 /tmp/b 2>/dev/null || true
             echo
           done
