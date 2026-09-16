@@ -13,17 +13,19 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Download current Uptodown client and inspect API constants
+      - name: Inspect APKBA download page
         shell: bash
         run: |
           set -euxo pipefail
-          curl -L --fail --retry 2 -A 'Mozilla/5.0' \
-            'https://www.apkba.com/uptodown-app-store/com.uptodown/download' -o /tmp/uptodown.apk
-          wc -c /tmp/uptodown.apk
-          sha256sum /tmp/uptodown.apk
-          file /tmp/uptodown.apk
-          unzip -t /tmp/uptodown.apk | tail -3
-          echo '--- relevant strings ---'
-          for f in $(unzip -Z1 /tmp/uptodown.apk | grep -E '^classes.*\.dex$'); do
-            unzip -p /tmp/uptodown.apk "$f" | strings | grep -E -C 4 'Uptodown_Android|Identificador-Version|APIKEY|\$\(=a%|apikey' || true
-          done
+          UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36'
+          curl -L --fail --retry 2 -A "$UA" \
+            'https://www.apkba.com/uptodown-app-store/com.uptodown/download' -o /tmp/apkba.html
+          wc -c /tmp/apkba.html
+          echo '--- URLs / APK references ---'
+          grep -Eo 'https?://[^"'"'"' <>]+' /tmp/apkba.html | grep -Ei 'apk|download|cdn|file|uptodown' | head -200 || true
+          echo '--- href/src/action/data fields ---'
+          grep -Eio '(href|src|action|data-[a-z0-9_-]+)=["'"'"'][^"'"'"']+' /tmp/apkba.html | grep -Ei 'apk|download|cdn|file|api|uptodown|script' | head -240 || true
+          echo '--- target hash / identifiers ---'
+          grep -Ein '25cda291a0b244e01d3531c0a699d27aa69e6db444b199e807c67f579026a454|7\.38|738|com\.uptodown|download|\.apk' /tmp/apkba.html | tail -220 || true
+          echo '--- scripts ---'
+          grep -Eio '<script[^>]+src=["'"'"'][^"'"'"']+' /tmp/apkba.html | head -100 || true
