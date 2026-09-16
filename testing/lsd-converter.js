@@ -203,7 +203,7 @@ function createConverter(input) {
     const { meridian: m, range: r, township: t, section: s, lsd } = parsed;
     const key = (((m - 4) * 30 + r - 1) * 126 + t - 1) * 36 + s - 1;
     const index = find(key);
-    const missing = () => ({ ...parsed, status: 'missing_record', message: 'This LSD has no location in the bundled Alberta grid. No coordinate was estimated.' });
+    const missing = () => ({ ...parsed, status: 'missing_record', message: 'No matching Alberta ATS record exists for this LSD. Check the range and meridian.' });
     if (index < 0) return missing();
     const record = decode(index), bit = 1 << (lsd - 1);
     if (record.ambiguous & bit) return { ...parsed, status: 'ambiguous_record', message: 'The source contains conflicting records for this LSD. No coordinate was selected.' };
