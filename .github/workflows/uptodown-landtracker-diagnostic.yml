@@ -13,15 +13,19 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch public Uptodown page
+      - name: Inspect public Uptodown download flow
         shell: bash
         run: |
           set -euxo pipefail
-          curl -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36' -L --fail --retry 2 \
-            'https://landtracker-pro.en.uptodown.com/android/download' -o /tmp/page.html
-          wc -c /tmp/page.html
-          grep -Eio 'https?://[^"'"'"' <>]+' /tmp/page.html | grep -Ei 'download|uptodown|utdstc|apk' | head -120 || true
-          echo '--- interesting markup ---'
-          grep -Ein '04d4f80b|download|fileid|appid|data-url|dw\.uptodown|version' /tmp/page.html | head -160 || true
-          echo '--- scripts ---'
-          grep -Eio '<script[^>]+src=["'"'"'][^"'"'"']+' /tmp/page.html | head -80 || true
+          UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36'
+          curl -A "$UA" -L --fail --retry 2 'https://landtracker-pro.en.uptodown.com/android/download' -o /tmp/page.html
+          echo '--- button markup ---'
+          sed -n '4118,4165p' /tmp/page.html || true
+          JS=$(grep -Eo 'https://stc\.utdstc\.com/[0-9]+/download\.js' /tmp/page.html | head -1)
+          echo "download.js=$JS"
+          curl -A "$UA" -L --fail "$JS" -o /tmp/download.js
+          wc -c /tmp/download.js
+          echo '--- download.js tokens ---'
+          grep -Eo '.{0,180}(file-id|fileID|app-id|appID|turnstile|downloadUrl|downloadURL|download-url|ajax|fetch\(|XMLHttpRequest|/download|dw\.uptodown|utdstc).{0,360}' /tmp/download.js | head -100 || true
+          echo '--- all URL-like strings in download.js ---'
+          grep -Eo 'https?[^"'"'"' ]+|/[A-Za-z0-9_?&=./:{}-]{8,}' /tmp/download.js | grep -Ei 'download|app|file|turnstile|url' | head -120 || true
