@@ -1,9 +1,11 @@
 {
-  "version": "0.2.1",
+  "version": "0.3.0",
   "releasedAt": "2026-09-15",
-  "title": "Installed app controls cleanup",
+  "title": "Settings moved to the header",
   "notes": [
-    "The Install app button is now hidden when R5 Atlas is already installed.",
-    "The Install app option remains available when R5 Atlas is opened in a browser and is not installed."
+    "Restored access to the original History tab by removing the floating App button that covered it.",
+    "Moved Settings to a cog beside the version badge in the top header.",
+    "Added settings placeholders for Offline data, Notifications, Appearance, Map preferences, Location & GPS, Data & storage, About, Diagnostics, and Reset app data.",
+    "Automatic update controls and manual update checking remain functional inside Settings."
   ]
 }

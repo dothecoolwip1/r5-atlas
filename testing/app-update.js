@@ -6,7 +6,7 @@
   const LAST_BUILD_KEY = 'r5-atlas-last-build';
   const CHECK_INTERVAL = 15 * 60 * 1000;
   let installPrompt = null;
-  let appButton = null;
+  let settingsGear = null;
   let notice = null;
   let updateInProgress = false;
   let notifiedVersion = null;
@@ -32,8 +32,9 @@
     const style = document.createElement('style');
     style.id = 'r5-app-ui-style';
     style.textContent = `
-      #r5-app-button{position:fixed;right:14px;bottom:14px;z-index:2147483000;border:1px solid rgba(255,255,255,.22);background:#171a20;color:#fff;border-radius:999px;padding:10px 14px;font:600 13px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.28);cursor:pointer}
-      #r5-app-button.r5-update-ready{background:#7a3df0;border-color:#a980ff}
+      #r5-settings-gear{width:34px;height:34px;min-width:34px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.11);color:#fff;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;padding:0;margin-right:8px;font:700 19px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:none;cursor:pointer;flex:0 0 auto}
+      #r5-settings-gear:active{transform:scale(.96)} #r5-settings-gear.r5-update-ready{background:#7a3df0;border-color:#b69cff;box-shadow:0 0 0 2px rgba(122,61,240,.18)}
+      #r5-settings-gear.r5-settings-gear-fallback{position:fixed;right:285px;top:12px;z-index:2147483000}
       #r5-app-overlay{position:fixed;inset:0;z-index:2147483640;background:rgba(0,0,0,.58);display:flex;align-items:center;justify-content:center;padding:18px}
       #r5-app-modal{width:min(520px,100%);max-height:min(760px,90vh);overflow:auto;background:#171a20;color:#f7f7f8;border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:20px;box-shadow:0 24px 70px rgba(0,0,0,.5);font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
       #r5-app-modal h2{font-size:20px;margin:0 0 8px} #r5-app-modal p{margin:8px 0;color:#d6d7db} #r5-app-modal ul{padding-left:20px;color:#e7e7ea} #r5-app-modal li{margin:7px 0}
@@ -41,6 +42,7 @@
       #r5-app-notice{position:fixed;left:12px;right:12px;bottom:64px;z-index:2147483500;margin:auto;width:min(560px,calc(100% - 24px));background:#171a20;color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:14px 16px;box-shadow:0 12px 42px rgba(0,0,0,.4);font:14px/1.4 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
       #r5-app-notice strong{display:block;margin-bottom:4px}.r5-notice-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.r5-notice-actions button{border:0;border-radius:9px;padding:8px 11px;font:700 13px system-ui;cursor:pointer}.r5-notice-actions .r5-primary{background:#7a3df0;color:#fff}.r5-notice-actions .r5-muted{background:#30343c;color:#fff}
       .r5-setting{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid rgba(255,255,255,.1)}.r5-setting:first-of-type{border-top:0}.r5-small{font-size:12px;color:#aeb1b8!important}
+      .r5-settings-list{margin-top:14px;border:1px solid rgba(255,255,255,.1);border-radius:13px;overflow:hidden}.r5-settings-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 13px;border-top:1px solid rgba(255,255,255,.09);background:#1d2128}.r5-settings-row:first-child{border-top:0}.r5-settings-row strong{font-size:13px}.r5-settings-row span{font-size:11px;color:#9fa4ad;text-align:right}.r5-settings-row .r5-live{color:#79d8a4}.r5-settings-section{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#8f96a0;margin:16px 0 6px;font-weight:800}
     `;
     document.head.appendChild(style);
   }
@@ -172,8 +174,8 @@
   function showUpdateAvailable(release) {
     if (!release || notifiedVersion === release.version) return;
     notifiedVersion = release.version;
-    appButton?.classList.add('r5-update-ready');
-    if (appButton) appButton.textContent = `App • v${release.version} ready`;
+    settingsGear?.classList.add('r5-update-ready');
+    if (settingsGear) settingsGear.setAttribute('aria-label', `Settings — v${release.version} update available`);
     showModal(
       `R5 Atlas v${release.version} is available`,
       `<p>You are currently using v${escapeHtml(BUILD_VERSION)}.</p><p><strong>${escapeHtml(release.title || 'What changed')}</strong></p>${notesHtml(release)}`,
@@ -233,17 +235,69 @@
 
   function openAppSettings() {
     const pref = getPreference();
-    const installedText = isStandalone() ? 'Installed' : 'Available as an installable web app';
+    const installedText = isStandalone() ? 'Installed app' : 'Web browser';
+    const autoText = pref === 'yes' ? 'On' : pref === 'no' ? 'Off — notify first' : 'Not selected';
     showModal(
-      'R5 Atlas App',
-      `<p><strong>Version:</strong> v${escapeHtml(BUILD_VERSION)}</p><p><strong>Status:</strong> ${escapeHtml(installedText)}</p><div class="r5-setting"><div><strong>Automatic updates</strong><p class="r5-small">Current setting: ${pref === 'yes' ? 'Yes' : pref === 'no' ? 'No — notify first' : 'Not selected'}</p></div></div>`,
+      'Settings',
+      `<p><strong>R5 Atlas v${escapeHtml(BUILD_VERSION)}</strong></p><p class="r5-small">${escapeHtml(installedText)}</p>
+       <div class="r5-settings-section">App</div>
+       <div class="r5-settings-list">
+         <div class="r5-settings-row"><strong>Automatic updates</strong><span class="r5-live">${escapeHtml(autoText)}</span></div>
+         <div class="r5-settings-row"><strong>Offline data</strong><span>Coming soon</span></div>
+         <div class="r5-settings-row"><strong>Notifications</strong><span>Coming soon</span></div>
+         <div class="r5-settings-row"><strong>Appearance</strong><span>Coming soon</span></div>
+       </div>
+       <div class="r5-settings-section">Map & device</div>
+       <div class="r5-settings-list">
+         <div class="r5-settings-row"><strong>Map preferences</strong><span>Coming soon</span></div>
+         <div class="r5-settings-row"><strong>Location & GPS</strong><span>Coming soon</span></div>
+         <div class="r5-settings-row"><strong>Data & storage</strong><span>Coming soon</span></div>
+       </div>
+       <div class="r5-settings-section">Support</div>
+       <div class="r5-settings-list">
+         <div class="r5-settings-row"><strong>About R5 Atlas</strong><span>Coming soon</span></div>
+         <div class="r5-settings-row"><strong>Diagnostics</strong><span>Coming soon</span></div>
+         <div class="r5-settings-row"><strong>Reset app data</strong><span>Coming soon</span></div>
+       </div>`,
       [
         ...(isStandalone() ? [] : [{ label: 'Install app', className: 'r5-primary', onClick: () => { closeModal(); installApp(); } }]),
         { label: 'Auto updates: Yes', className: pref === 'yes' ? 'r5-good' : 'r5-muted', onClick: () => { setPreference('yes'); closeModal(); checkForUpdates(); } },
         { label: 'Auto updates: No', className: pref === 'no' ? 'r5-good' : 'r5-muted', onClick: () => { setPreference('no'); closeModal(); checkForUpdates(); } },
+        { label: 'Check for updates', className: 'r5-muted', onClick: () => { closeModal(); checkForUpdates(); } },
         { label: 'Close', className: 'r5-muted', onClick: closeModal }
       ]
     );
+  }
+
+  function findVersionBadge() {
+    const matches = Array.from(document.querySelectorAll('body *')).filter(el => {
+      const value = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      return value.includes('ST37') && value.includes(`App v${BUILD_VERSION}`) && value.length < 120;
+    });
+    if (!matches.length) return null;
+    return matches.find(el => {
+      const style = getComputedStyle(el);
+      return parseFloat(style.borderTopLeftRadius || '0') >= 8 || style.borderStyle !== 'none';
+    }) || matches.sort((a, b) => a.childElementCount - b.childElementCount)[0];
+  }
+
+  function mountSettingsGear() {
+    document.getElementById('r5-settings-gear')?.remove();
+    const gear = document.createElement('button');
+    gear.id = 'r5-settings-gear';
+    gear.type = 'button';
+    gear.textContent = '⚙';
+    gear.setAttribute('aria-label', 'R5 Atlas settings');
+    gear.setAttribute('title', 'Settings');
+    gear.addEventListener('click', openAppSettings);
+    const versionBadge = findVersionBadge();
+    if (versionBadge?.parentElement) {
+      versionBadge.insertAdjacentElement('beforebegin', gear);
+    } else {
+      gear.classList.add('r5-settings-gear-fallback');
+      document.body.appendChild(gear);
+    }
+    settingsGear = gear;
   }
 
   async function registerCurrentWorker() {
@@ -276,12 +330,7 @@
 
   async function start() {
     injectStyles();
-    appButton = document.createElement('button');
-    appButton.id = 'r5-app-button';
-    appButton.type = 'button';
-    appButton.textContent = 'App';
-    appButton.addEventListener('click', openAppSettings);
-    document.body.appendChild(appButton);
+    mountSettingsGear();
 
     await registerCurrentWorker();
     await showUpdatedMessageIfNeeded();
