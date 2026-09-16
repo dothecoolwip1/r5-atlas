@@ -1,0 +1,70 @@
+name: Enforce testing app version
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'testing/**'
+  pull_request:
+    paths:
+      - 'testing/**'
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Require version bump and matching patch metadata
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, re, subprocess
+          from pathlib import Path
+
+          release_path = Path('testing/version.json')
+          if not release_path.exists():
+              raise SystemExit('testing/version.json is required')
+
+          release = json.loads(release_path.read_text(encoding='utf-8'))
+          version = release.get('version', '')
+          notes = release.get('notes')
+          if not re.fullmatch(r'\d+\.\d+\.\d+', version):
+              raise SystemExit('testing/version.json must contain a semantic version such as 0.2.0')
+          if not isinstance(notes, list) or not notes or not all(isinstance(n, str) and n.strip() for n in notes):
+              raise SystemExit('Every version must include non-empty patch notes')
+
+          index = Path('testing/index.html').read_text(encoding='utf-8')
+          if f'App v{version}' not in index:
+              raise SystemExit(f'Visible app version does not match version.json ({version})')
+          if f'name="r5-app-version" content="{version}"' not in index:
+              raise SystemExit(f'App version meta tag does not match version.json ({version})')
+
+          try:
+              old_text = subprocess.check_output(
+                  ['git', 'show', 'HEAD^:testing/version.json'], text=True, stderr=subprocess.DEVNULL
+              )
+              old_version = json.loads(old_text).get('version')
+          except Exception:
+              old_version = None
+
+          has_parent = subprocess.run(
+              ['git', 'rev-parse', 'HEAD^'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+          ).returncode == 0
+          changed = subprocess.check_output(
+              ['git', 'diff', '--name-only', 'HEAD^', 'HEAD', '--', 'testing'], text=True
+          ).splitlines() if has_parent else []
+
+          meaningful = [p for p in changed if p != 'testing/version.json']
+          if meaningful and old_version == version:
+              raise SystemExit(
+                  f'Testing app changed ({", ".join(meaningful)}) but version stayed at {version}. '
+                  'Every testing app change must bump the version and update patch notes.'
+              )
+
+          print(f'R5 Atlas testing version OK: {version}')
+          PY
