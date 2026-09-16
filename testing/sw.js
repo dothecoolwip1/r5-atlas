@@ -8,6 +8,7 @@ const PRECACHE = [
   './app-update.js',
   './manifest.webmanifest',
   './lsd-converter.js',
+  './lsd-converter-v2.js',
   './data/alberta-ats-v41-lsd.bin.gz',
   './assets/r5-atlas-app-icon.png',
   './assets/r5-atlas-logo.png'

@@ -1,11 +1,13 @@
 {
-  "version": "0.3.0",
+  "version": "0.4.0",
   "releasedAt": "2026-09-15",
-  "title": "Settings moved to the header",
+  "title": "Alberta legal land converter v2",
   "notes": [
-    "Restored access to the original History tab by removing the floating App button that covered it.",
-    "Moved Settings to a cog beside the version badge in the top header.",
-    "Added settings placeholders for Offline data, Notifications, Appearance, Map preferences, Location & GPS, Data & storage, About, Diagnostics, and Reset app data.",
-    "Automatic update controls and manual update checking remain functional inside Settings."
+    "Rebuilt the testing legal-land lookup around Converter v2 while keeping the authoritative Alberta ATS v4.1 offline pack.",
+    "Added flexible LSD input parsing including dashes, spaces, slashes, labelled descriptions, and ten-digit PID input.",
+    "Added offline NE, NW, SE, SW and section-centre lookups derived only from complete authoritative LSD records; coordinates are never guessed.",
+    "Quarter and section lookups use the live Alberta polygon centre when online and fall back to the offline data when disconnected.",
+    "Added startup self-tests that block the converter if known records, parser variants, range isolation, or quarter/section lookups fail.",
+    "Improved missing-record errors so a valid-looking description cannot silently alias to a different range or meridian."
   ]
 }
