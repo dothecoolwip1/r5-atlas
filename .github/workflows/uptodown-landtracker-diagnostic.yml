@@ -7,25 +7,23 @@ on:
       - '.github/workflows/uptodown-landtracker-diagnostic.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Inspect public Uptodown download flow
+      - uses: actions/checkout@v4
+      - name: Capture public download JavaScript
         shell: bash
         run: |
           set -euxo pipefail
           UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36'
-          curl -A "$UA" -L --fail --retry 2 'https://landtracker-pro.en.uptodown.com/android/download' -o /tmp/page.html
-          echo '--- button markup ---'
-          sed -n '4118,4165p' /tmp/page.html || true
-          JS=$(grep -Eo 'https://stc\.utdstc\.com/[0-9]+/download\.js' /tmp/page.html | head -1)
-          echo "download.js=$JS"
-          curl -A "$UA" -L --fail "$JS" -o /tmp/download.js
-          wc -c /tmp/download.js
-          echo '--- download.js tokens ---'
-          grep -Eo '.{0,180}(file-id|fileID|app-id|appID|turnstile|downloadUrl|downloadURL|download-url|ajax|fetch\(|XMLHttpRequest|/download|dw\.uptodown|utdstc).{0,360}' /tmp/download.js | head -100 || true
-          echo '--- all URL-like strings in download.js ---'
-          grep -Eo 'https?[^"'"'"' ]+|/[A-Za-z0-9_?&=./:{}-]{8,}' /tmp/download.js | grep -Ei 'download|app|file|turnstile|url' | head -120 || true
+          curl -A "$UA" -L --fail --retry 2 --connect-timeout 10 --max-time 30 \
+            'https://stc.utdstc.com/1789457684850/download.js' -o tools/uptodown-download.js
+          wc -c tools/uptodown-download.js
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/uptodown-download.js
+          git commit -m 'Capture Uptodown download transport JavaScript'
+          git push origin HEAD:main
