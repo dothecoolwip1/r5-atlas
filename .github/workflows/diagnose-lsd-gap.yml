@@ -17,25 +17,26 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
-          import json, urllib.parse, urllib.request
-          tests = [
-            ('ags-target-all', 'https://geospatial.alberta.ca/titan/rest/services/ags_apps/ags_apps_alberta_township_system/MapServer/3/query', "M=4 AND RGE=29 AND TWP=39 AND SEC=36 AND LS=10"),
-            ('ags-target-space', 'https://geospatial.alberta.ca/titan/rest/services/ags_apps/ags_apps_alberta_township_system/MapServer/3/query', "M=4 AND RGE=29 AND TWP=39 AND SEC=36 AND LS=10 AND RA=' '"),
-            ('ags-target-section', 'https://geospatial.alberta.ca/titan/rest/services/ags_apps/ags_apps_alberta_township_system/MapServer/3/query', "M=4 AND RGE=29 AND TWP=39 AND SEC=36"),
-            ('ags-control', 'https://geospatial.alberta.ca/titan/rest/services/ags_apps/ags_apps_alberta_township_system/MapServer/3/query', "M=4 AND RGE=28 AND TWP=39 AND SEC=36 AND LS=10"),
-            ('base-target-all', 'https://geospatial.alberta.ca/titan/rest/services/base/alberta_township_system/MapServer/5/query', "M=4 AND RGE=29 AND TWP=39 AND SEC=36 AND LS=10"),
-          ]
-          for name, base, where in tests:
-            q = urllib.parse.urlencode({'f':'json','where':where,'outFields':'OBJECTID,M,RGE,TWP,SEC,LS,QS,RA,DESCRIPTOR','returnGeometry':'false','resultRecordCount':100})
-            url = base + '?' + q
-            with urllib.request.urlopen(url, timeout=60) as r:
-              d = json.load(r)
-            print('\n###', name)
-            if 'error' in d:
-              print(json.dumps(d['error'], indent=2))
-              continue
-            feats = d.get('features', [])
-            print('count', len(feats))
-            for f in feats[:25]:
-              print(json.dumps(f.get('attributes',{}), sort_keys=True))
+          import collections, json, urllib.parse, urllib.request
+          base='https://geospatial.alberta.ca/titan/rest/services/ags_apps/ags_apps_alberta_township_system/MapServer/3/query'
+          def query(where, out='OBJECTID,M,RGE,TWP,SEC,LS,QS,RA,DESCRIPTOR', count=1000):
+            q=urllib.parse.urlencode({'f':'json','where':where,'outFields':out,'returnGeometry':'false','resultRecordCount':count,'orderByFields':'SEC,LS'})
+            with urllib.request.urlopen(base+'?'+q, timeout=60) as r:return json.load(r)
+          for rge in (28,29,30):
+            d=query(f'M=4 AND RGE={rge} AND TWP=39')
+            feats=d.get('features',[])
+            secs=collections.defaultdict(list)
+            for f in feats:
+              a=f['attributes']; secs[a['SEC']].append(a['LS'])
+            print('\n### RANGE',rge,'TWP39')
+            print('records',len(feats))
+            print('sections',sorted(secs))
+            print('section_count',len(secs))
+            for s in sorted(secs):
+              print('SEC',s,'LSDs',sorted(secs[s]))
+          for sec in (1,2,3,4,5,6,31,32,33,34,35,36):
+            d=query(f'M=4 AND RGE=29 AND TWP=39 AND SEC={sec}')
+            feats=d.get('features',[])
+            print('\nR29 SEC',sec,'count',len(feats))
+            for f in feats[:20]: print(json.dumps(f['attributes'],sort_keys=True))
           PY
