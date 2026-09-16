@@ -1,0 +1,18 @@
+{
+  "name": "R5 Atlas",
+  "short_name": "R5 Atlas",
+  "description": "Alberta legal land and field operations tracker",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0d0f12",
+  "theme_color": "#16191f",
+  "icons": [
+    {
+      "src": "assets/r5-atlas-app-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
