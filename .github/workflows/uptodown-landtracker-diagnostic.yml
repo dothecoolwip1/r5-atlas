@@ -1,0 +1,27 @@
+name: Inspect LandTracker public download transport
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/uptodown-landtracker-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch public Uptodown page
+        shell: bash
+        run: |
+          set -euxo pipefail
+          curl -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36' -L --fail --retry 2 \
+            'https://landtracker-pro.en.uptodown.com/android/download' -o /tmp/page.html
+          wc -c /tmp/page.html
+          grep -Eio 'https?://[^"'"'"' <>]+' /tmp/page.html | grep -Ei 'download|uptodown|utdstc|apk' | head -120 || true
+          echo '--- interesting markup ---'
+          grep -Ein '04d4f80b|download|fileid|appid|data-url|dw\.uptodown|version' /tmp/page.html | head -160 || true
+          echo '--- scripts ---'
+          grep -Eio '<script[^>]+src=["'"'"'][^"'"'"']+' /tmp/page.html | head -80 || true
