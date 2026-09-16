@@ -2,28 +2,45 @@ name: Inspect LandTracker public download transport
 
 on:
   push:
-    branches: [main]
+    branches: [landtracker-html-build]
     paths:
       - '.github/workflows/uptodown-landtracker-diagnostic.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Capture public download JavaScript
+      - name: Probe Uptodown API transports
         shell: bash
         run: |
-          set -euxo pipefail
-          UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36'
-          curl -A "$UA" -L --fail --retry 2 --connect-timeout 10 --max-time 30 \
-            'https://stc.utdstc.com/1789457684850/download.js' -o tools/uptodown-download.js
-          wc -c tools/uptodown-download.js
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tools/uptodown-download.js
-          git commit -m 'Capture Uptodown download transport JavaScript'
-          git push origin HEAD:main
+          set -u
+          python - <<'PY'
+          import hashlib, time
+          secret='$(=a%·!45J&S'
+          hour=int(time.time()//3600*3600)
+          key=hashlib.sha256((secret+str(hour)).encode()).hexdigest()
+          open('/tmp/key','w').write(key)
+          print('apikey generated')
+          PY
+          KEY=$(cat /tmp/key)
+          UA='Dalvik/2.1.0 (Linux; U; Android 14; SM-G955F Build/AP2A.240805.005)'
+          PATHQ='/eapi/apps/byPackagename/com.Rocanda.LandTrackerPro'
+          for spec in \
+            'normal|https://www.uptodown.app' \
+            'pinned|https://www.uptodown.app|51.210.117.112' \
+            'origin-ip|https://51.210.117.112' \
+            'api-domain|https://api.uptodown.com'; do
+            IFS='|' read -r name base ip <<< "$spec"
+            echo "=== $name ==="
+            args=(-sS -D /tmp/h -o /tmp/b --max-time 30 -A "$UA" -H 'Identificador: Uptodown_Android' -H 'Identificador-Version: 707' -H "APIKEY: $KEY")
+            if [ "$name" = pinned ]; then args+=(--resolve "www.uptodown.app:443:$ip"); fi
+            if [ "$name" = origin-ip ]; then args+=(-k -H 'Host: www.uptodown.app'); fi
+            curl "${args[@]}" "$base$PATHQ" || true
+            head -1 /tmp/h 2>/dev/null || true
+            wc -c /tmp/b 2>/dev/null || true
+            head -c 240 /tmp/b 2>/dev/null || true
+            echo
+          done
