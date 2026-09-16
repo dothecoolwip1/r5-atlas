@@ -13,25 +13,21 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Download current Uptodown client and inspect API constants
+      - name: Decompile current Uptodown API client
         shell: bash
         run: |
           set -euxo pipefail
           UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36'
           curl -L --fail --retry 3 --retry-all-errors -A "$UA" \
             'https://d.apkpure.net/b/APK/com.uptodown?version=latest' -o /tmp/uptodown.apk
-          wc -c /tmp/uptodown.apk
-          sha256sum /tmp/uptodown.apk
-          file /tmp/uptodown.apk
-          unzip -t /tmp/uptodown.apk | tail -3
-          mkdir -p /tmp/dex
-          unzip -j /tmp/uptodown.apk 'classes*.dex' -d /tmp/dex >/dev/null
-          echo '--- relevant strings ---'
-          for f in /tmp/dex/classes*.dex; do
-            echo "### $f"
-            strings -a -n 5 "$f" | grep -E -C 8 'Uptodown_Android|Identificador-Version|APIKEY|apikey|API_KEY|eapi/apps/byPackagename|downloadUrl|download-url|/eapi/' || true
-          done
-          echo '--- likely secrets / header constants ---'
-          for f in /tmp/dex/classes*.dex; do
-            strings -a -n 8 "$f" | grep -E '\$\(=a%|Identificador|Uptodown_Android|APIKEY|apikey|sha256|SHA-256' | head -300 || true
-          done
+          curl -L --fail --retry 3 \
+            'https://github.com/skylot/jadx/releases/download/v1.5.3/jadx-1.5.3.zip' -o /tmp/jadx.zip
+          mkdir -p /tmp/jadx /tmp/src
+          unzip -q /tmp/jadx.zip -d /tmp/jadx
+          /tmp/jadx/bin/jadx -j 4 --show-bad-code -d /tmp/src /tmp/uptodown.apk >/tmp/jadx.log 2>&1 || true
+          echo '--- files containing API headers ---'
+          grep -RIl 'Identificador-Version\|Uptodown_Android\|APIKEY' /tmp/src/sources | head -50
+          echo '--- source context ---'
+          grep -RIn -C 25 'Identificador-Version\|Uptodown_Android\|APIKEY' /tmp/src/sources | head -900 || true
+          echo '--- base API / auth context ---'
+          grep -RIn -C 20 'byPackagename\|auth/token\|Hashing.sha256\|sha256Base' /tmp/src/sources | head -700 || true
