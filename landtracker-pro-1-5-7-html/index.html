@@ -8,6 +8,13 @@
   <link rel="icon" id="favicon" type="image/png" href="">
   <link rel="apple-touch-icon" id="appleIcon" href="">
   <script src="assets-inline.js"></script>
+  <script src="asset-icon-01.js"></script>
+  <script src="asset-icon-02.js"></script>
+  <script src="asset-icon-03.js"></script>
+  <script src="asset-icon-04.js"></script>
+  <script src="asset-icon-05.js"></script>
+  <script src="asset-icon-06.js"></script>
+  <script src="asset-icon-07.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded',()=>{
       document.getElementById('favicon').href=LandTrackerAssets['icon.png'];
@@ -46,23 +53,59 @@
       <section class="input-panel">
         <div id="dlsPanel" class="converter-panel active-panel">
           <div class="field-grid">
-            <label class="material-field"><span>Quarter</span><select id="dlsQuarter"></select></label>
-            <label class="material-field"><span>LSD</span><select id="dlsLsd"></select></label>
-            <label class="material-field"><span>Section</span><select id="dlsSection"></select></label>
-            <label class="material-field"><span>Township</span><select id="dlsTownship"></select></label>
-            <label class="material-field"><span>Range</span><select id="dlsRange"></select></label>
-            <label class="material-field"><span>Meridian</span><select id="dlsMeridian"></select></label>
+            <label class="material-field">
+              <span>Quarter</span>
+              <select id="dlsQuarter"></select>
+            </label>
+            <label class="material-field">
+              <span>LSD</span>
+              <select id="dlsLsd"></select>
+            </label>
+            <label class="material-field">
+              <span>Section</span>
+              <select id="dlsSection"></select>
+            </label>
+            <label class="material-field">
+              <span>Township</span>
+              <select id="dlsTownship"></select>
+            </label>
+            <label class="material-field">
+              <span>Range</span>
+              <select id="dlsRange"></select>
+            </label>
+            <label class="material-field">
+              <span>Meridian</span>
+              <select id="dlsMeridian"></select>
+            </label>
           </div>
         </div>
 
         <div id="bcntsPanel" class="converter-panel">
           <div class="field-grid">
-            <label class="material-field"><span>Quarter</span><select id="bcntsQuarter"></select></label>
-            <label class="material-field"><span>Centizone</span><select id="bcntsCentizone"></select></label>
-            <label class="material-field"><span>Zone Block</span><select id="bcntsZoneBlock"></select></label>
-            <label class="material-field"><span>Map Unit</span><select id="bcntsMapUnit"></select></label>
-            <label class="material-field"><span>Map Unit Sub</span><select id="bcntsMapUnitSub"></select></label>
-            <label class="material-field"><span>Map Sheet</span><select id="bcntsMapSheet"></select></label>
+            <label class="material-field">
+              <span>Quarter</span>
+              <select id="bcntsQuarter"></select>
+            </label>
+            <label class="material-field">
+              <span>Centizone</span>
+              <select id="bcntsCentizone"></select>
+            </label>
+            <label class="material-field">
+              <span>Zone Block</span>
+              <select id="bcntsZoneBlock"></select>
+            </label>
+            <label class="material-field">
+              <span>Map Unit</span>
+              <select id="bcntsMapUnit"></select>
+            </label>
+            <label class="material-field">
+              <span>Map Unit Sub</span>
+              <select id="bcntsMapUnitSub"></select>
+            </label>
+            <label class="material-field">
+              <span>Map Sheet</span>
+              <select id="bcntsMapSheet"></select>
+            </label>
           </div>
         </div>
 
@@ -72,7 +115,9 @@
             <div class="reverse-input-wrap">
               <span class="hemisphere">N</span>
               <input id="reverseLat" inputmode="decimal" autocomplete="off" value="52.000000">
-              <button class="gps-btn" id="gpsButton" aria-label="Get Current Location" title="Get Current Location"><img src="" data-asset="location.png" alt=""></button>
+              <button class="gps-btn" id="gpsButton" aria-label="Get Current Location" title="Get Current Location">
+                <img src="" data-asset="location.png" alt="">
+              </button>
             </div>
           </div>
           <div class="reverse-row">
@@ -100,7 +145,9 @@
 
     <main id="favoritesScreen" class="screen secondary-screen hidden">
       <div class="secondary-actions">
-        <button class="text-action" id="sortFavoritesButton"><img src="" data-asset="sort.png" alt=""> <span id="sortFavoritesText">Sorting by date added to favorites</span></button>
+        <button class="text-action" id="sortFavoritesButton">
+          <img src="" data-asset="sort.png" alt=""> <span id="sortFavoritesText">Sorting by date added to favorites</span>
+        </button>
         <div class="secondary-action-row">
           <button class="plain-button" id="exportFavoritesButton">Export favorites</button>
           <label class="plain-button file-button">Import favorites<input type="file" id="importFavoritesInput" accept=".ltpro,application/ltpro,application/roc.ltpro,application/json"></label>
@@ -112,8 +159,20 @@
 
     <main id="settingsScreen" class="screen secondary-screen hidden">
       <div class="settings-list">
-        <label class="setting-row"><div><div class="setting-title">Use detailed location</div></div><input type="checkbox" id="detailedLocationToggle" class="switch-input"><span class="switch" aria-hidden="true"></span></label>
-        <label class="setting-row"><div><div class="setting-title">Export labels to maps app</div></div><input type="checkbox" id="exportLabelsToggle" class="switch-input"><span class="switch" aria-hidden="true"></span></label>
+        <label class="setting-row">
+          <div>
+            <div class="setting-title">Use detailed location</div>
+          </div>
+          <input type="checkbox" id="detailedLocationToggle" class="switch-input">
+          <span class="switch" aria-hidden="true"></span>
+        </label>
+        <label class="setting-row">
+          <div>
+            <div class="setting-title">Export labels to maps app</div>
+          </div>
+          <input type="checkbox" id="exportLabelsToggle" class="switch-input">
+          <span class="switch" aria-hidden="true"></span>
+        </label>
       </div>
     </main>
   </div>
@@ -124,8 +183,17 @@
     <button data-menu-action="settings">Settings</button>
     <button data-menu-action="help">Help</button>
   </div>
+
   <div id="cardMenu" class="popup-menu card-popup hidden" role="menu"></div>
-  <div id="dialogBackdrop" class="dialog-backdrop hidden" aria-hidden="true"><div class="dialog" role="dialog" aria-modal="true"><div class="dialog-title" id="dialogTitle"></div><div class="dialog-body" id="dialogBody"></div><div class="dialog-actions" id="dialogActions"></div></div></div>
+
+  <div id="dialogBackdrop" class="dialog-backdrop hidden" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true">
+      <div class="dialog-title" id="dialogTitle"></div>
+      <div class="dialog-body" id="dialogBody"></div>
+      <div class="dialog-actions" id="dialogActions"></div>
+    </div>
+  </div>
+
   <div id="toast" class="toast hidden" role="status"></div>
 
   <script src="converter-core.js"></script>
