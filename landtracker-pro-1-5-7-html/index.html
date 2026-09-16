@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#3498DB">
+  <title>LandTracker Pro</title>
+  <link rel="icon" id="favicon" type="image/png" href="">
+  <link rel="apple-touch-icon" id="appleIcon" href="">
+  <script src="assets-inline.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded',()=>{
+      document.getElementById('favicon').href=LandTrackerAssets['icon.png'];
+      document.getElementById('appleIcon').href=LandTrackerAssets['icon.png'];
+      document.querySelectorAll('[data-asset]').forEach(el=>{ el.src=LandTrackerAssets[el.dataset.asset]||''; });
+    });
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="toolbar" id="mainToolbar">
+      <div class="toolbar-left">
+        <button class="icon-btn back-btn hidden" id="backButton" aria-label="Back">‹</button>
+        <img src="" data-asset="icon.png" class="app-icon" id="toolbarIcon" alt="">
+        <div class="toolbar-title" id="toolbarTitle">LandTracker Pro</div>
+      </div>
+      <div class="toolbar-actions" id="toolbarActions">
+        <button class="toolbar-icon-action" id="favoritesAction" aria-label="Favorites" title="Favorites">
+          <img src="" data-asset="favorite.png" alt="">
+        </button>
+        <button class="toolbar-icon-action" id="mapAction" aria-label="Show in Maps" title="Show in Maps">
+          <img src="" data-asset="map.png" alt="">
+        </button>
+        <button class="toolbar-icon-action overflow-action" id="overflowAction" aria-label="More options" title="More options">⋮</button>
+      </div>
+    </header>
+
+    <main id="converterScreen" class="screen active-screen">
+      <nav class="tabs" role="tablist" aria-label="Converter type">
+        <button class="tab active" data-tab="dls" role="tab">DLS</button>
+        <button class="tab" data-tab="bcnts" role="tab">BCNTS</button>
+        <button class="tab" data-tab="reverse" role="tab">Reverse</button>
+      </nav>
+
+      <section class="input-panel">
+        <div id="dlsPanel" class="converter-panel active-panel">
+          <div class="field-grid">
+            <label class="material-field"><span>Quarter</span><select id="dlsQuarter"></select></label>
+            <label class="material-field"><span>LSD</span><select id="dlsLsd"></select></label>
+            <label class="material-field"><span>Section</span><select id="dlsSection"></select></label>
+            <label class="material-field"><span>Township</span><select id="dlsTownship"></select></label>
+            <label class="material-field"><span>Range</span><select id="dlsRange"></select></label>
+            <label class="material-field"><span>Meridian</span><select id="dlsMeridian"></select></label>
+          </div>
+        </div>
+
+        <div id="bcntsPanel" class="converter-panel">
+          <div class="field-grid">
+            <label class="material-field"><span>Quarter</span><select id="bcntsQuarter"></select></label>
+            <label class="material-field"><span>Centizone</span><select id="bcntsCentizone"></select></label>
+            <label class="material-field"><span>Zone Block</span><select id="bcntsZoneBlock"></select></label>
+            <label class="material-field"><span>Map Unit</span><select id="bcntsMapUnit"></select></label>
+            <label class="material-field"><span>Map Unit Sub</span><select id="bcntsMapUnitSub"></select></label>
+            <label class="material-field"><span>Map Sheet</span><select id="bcntsMapSheet"></select></label>
+          </div>
+        </div>
+
+        <div id="reversePanel" class="converter-panel">
+          <div class="reverse-row">
+            <label for="reverseLat">Latitude</label>
+            <div class="reverse-input-wrap">
+              <span class="hemisphere">N</span>
+              <input id="reverseLat" inputmode="decimal" autocomplete="off" value="52.000000">
+              <button class="gps-btn" id="gpsButton" aria-label="Get Current Location" title="Get Current Location"><img src="" data-asset="location.png" alt=""></button>
+            </div>
+          </div>
+          <div class="reverse-row">
+            <label for="reverseLon">Longitude</label>
+            <div class="reverse-input-wrap">
+              <span class="hemisphere">W</span>
+              <input id="reverseLon" inputmode="decimal" autocomplete="off" value="114.000000">
+              <span class="gps-spacer" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="convert-bar">
+        <button id="inputSummaryButton" class="input-summary" type="button">1-1-1-1W1</button>
+        <button id="convertButton" class="convert-button" type="button">Convert</button>
+      </div>
+
+      <section class="results-section">
+        <div class="section-label">Recently converted</div>
+        <div id="recentResults" class="result-list"></div>
+        <div id="emptyHistory" class="empty-state">No recent conversions.</div>
+      </section>
+    </main>
+
+    <main id="favoritesScreen" class="screen secondary-screen hidden">
+      <div class="secondary-actions">
+        <button class="text-action" id="sortFavoritesButton"><img src="" data-asset="sort.png" alt=""> <span id="sortFavoritesText">Sorting by date added to favorites</span></button>
+        <div class="secondary-action-row">
+          <button class="plain-button" id="exportFavoritesButton">Export favorites</button>
+          <label class="plain-button file-button">Import favorites<input type="file" id="importFavoritesInput" accept=".ltpro,application/ltpro,application/roc.ltpro,application/json"></label>
+        </div>
+      </div>
+      <div id="favoritesResults" class="result-list favorites-list"></div>
+      <div id="emptyFavorites" class="empty-state">No favorites available.</div>
+    </main>
+
+    <main id="settingsScreen" class="screen secondary-screen hidden">
+      <div class="settings-list">
+        <label class="setting-row"><div><div class="setting-title">Use detailed location</div></div><input type="checkbox" id="detailedLocationToggle" class="switch-input"><span class="switch" aria-hidden="true"></span></label>
+        <label class="setting-row"><div><div class="setting-title">Export labels to maps app</div></div><input type="checkbox" id="exportLabelsToggle" class="switch-input"><span class="switch" aria-hidden="true"></span></label>
+      </div>
+    </main>
+  </div>
+
+  <div id="overflowMenu" class="popup-menu hidden" role="menu">
+    <button data-menu-action="favorites">Favorites</button>
+    <button data-menu-action="map">Show in Maps</button>
+    <button data-menu-action="settings">Settings</button>
+    <button data-menu-action="help">Help</button>
+  </div>
+  <div id="cardMenu" class="popup-menu card-popup hidden" role="menu"></div>
+  <div id="dialogBackdrop" class="dialog-backdrop hidden" aria-hidden="true"><div class="dialog" role="dialog" aria-modal="true"><div class="dialog-title" id="dialogTitle"></div><div class="dialog-body" id="dialogBody"></div><div class="dialog-actions" id="dialogActions"></div></div></div>
+  <div id="toast" class="toast hidden" role="status"></div>
+
+  <script src="converter-core.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
