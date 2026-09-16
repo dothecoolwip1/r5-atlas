@@ -1,0 +1,74 @@
+name: Apply validated testing PWA changes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-testing-pwa.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recreate validated PWA files from prepared workflow
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re, textwrap
+
+          src = Path('.github/workflows/add-testing-pwa.yml').read_text(encoding='utf-8')
+          for target in [
+              'testing/manifest.webmanifest',
+              'testing/version.json',
+              'testing/sw.js',
+              'testing/app-update.js',
+          ]:
+              pattern = rf"cat > {re.escape(target)} <<'EOF'\n(.*?)\n\s*EOF"
+              match = re.search(pattern, src, re.S)
+              if not match:
+                  raise SystemExit(f'Could not extract {target}')
+              content = textwrap.dedent(match.group(1)) + '\n'
+              Path(target).write_text(content, encoding='utf-8')
+
+          p = Path('testing/index.html')
+          text = p.read_text(encoding='utf-8')
+          old_version = 'ST37 • Aug 2026 • App v0.1.0'
+          new_version = 'ST37 • Aug 2026 • App v0.2.0'
+          if old_version not in text:
+              raise SystemExit('Expected v0.1.0 header not found')
+          text = text.replace(old_version, new_version, 1)
+
+          if 'name="r5-app-version"' not in text:
+              head_insert = '<meta name="r5-app-version" content="0.2.0"><meta name="theme-color" content="#16191f"><link rel="manifest" href="manifest.webmanifest">\n'
+              text = text.replace('</head>', head_insert + '</head>', 1)
+          if 'src="app-update.js"' not in text:
+              text = text.replace('</body>', '<script src="app-update.js" defer></script>\n</body>', 1)
+          p.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate
+        shell: bash
+        run: |
+          python -m json.tool testing/manifest.webmanifest >/dev/null
+          python -m json.tool testing/version.json >/dev/null
+          node --check testing/app-update.js
+          node --check testing/sw.js
+          grep -Fq 'ST37 • Aug 2026 • App v0.2.0' testing/index.html
+          grep -Fq 'name="r5-app-version" content="0.2.0"' testing/index.html
+          grep -Fq 'rel="manifest" href="manifest.webmanifest"' testing/index.html
+          grep -Fq 'src="app-update.js"' testing/index.html
+          git diff --exit-code HEAD -- index.html assets
+
+      - name: Commit testing app v0.2.0
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add testing/index.html testing/manifest.webmanifest testing/version.json testing/sw.js testing/app-update.js
+          git commit -m 'Make testing app installable with managed updates v0.2.0'
+          git push origin HEAD:main
