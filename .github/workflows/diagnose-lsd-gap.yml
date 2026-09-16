@@ -1,4 +1,4 @@
-name: Diagnose LSD data gap
+name: Clarify invalid LSD message
 
 on:
   push:
@@ -7,36 +7,32 @@ on:
       - '.github/workflows/diagnose-lsd-gap.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  diagnose:
+  patch:
     runs-on: ubuntu-latest
     steps:
-      - name: Query Alberta ATS services
+      - uses: actions/checkout@v4
+      - name: Change converter message only
         shell: bash
         run: |
           python - <<'PY'
-          import collections, json, urllib.parse, urllib.request
-          base='https://geospatial.alberta.ca/titan/rest/services/ags_apps/ags_apps_alberta_township_system/MapServer/3/query'
-          def query(where, out='OBJECTID,M,RGE,TWP,SEC,LS,QS,RA,DESCRIPTOR', count=1000):
-            q=urllib.parse.urlencode({'f':'json','where':where,'outFields':out,'returnGeometry':'false','resultRecordCount':count,'orderByFields':'SEC,LS'})
-            with urllib.request.urlopen(base+'?'+q, timeout=60) as r:return json.load(r)
-          for rge in (28,29,30):
-            d=query(f'M=4 AND RGE={rge} AND TWP=39')
-            feats=d.get('features',[])
-            secs=collections.defaultdict(list)
-            for f in feats:
-              a=f['attributes']; secs[a['SEC']].append(a['LS'])
-            print('\n### RANGE',rge,'TWP39')
-            print('records',len(feats))
-            print('sections',sorted(secs))
-            print('section_count',len(secs))
-            for s in sorted(secs):
-              print('SEC',s,'LSDs',sorted(secs[s]))
-          for sec in (1,2,3,4,5,6,31,32,33,34,35,36):
-            d=query(f'M=4 AND RGE=29 AND TWP=39 AND SEC={sec}')
-            feats=d.get('features',[])
-            print('\nR29 SEC',sec,'count',len(feats))
-            for f in feats[:20]: print(json.dumps(f['attributes'],sort_keys=True))
+          from pathlib import Path
+          p=Path('testing/lsd-converter.js')
+          s=p.read_text(encoding='utf-8')
+          old='This LSD has no location in the bundled Alberta grid. No coordinate was estimated.'
+          new='No matching Alberta ATS record exists for this LSD. Check the range and meridian.'
+          if s.count(old) != 1:
+            raise SystemExit('Expected converter message not found exactly once')
+          p.write_text(s.replace(old,new),encoding='utf-8')
           PY
+      - name: Commit converter-only app change and remove diagnostic workflow
+        shell: bash
+        run: |
+          rm .github/workflows/diagnose-lsd-gap.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add testing/lsd-converter.js .github/workflows/diagnose-lsd-gap.yml
+          git commit -m 'Clarify nonexistent Alberta ATS LSD message'
+          git push origin HEAD:main
