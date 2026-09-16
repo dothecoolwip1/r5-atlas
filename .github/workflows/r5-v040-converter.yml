@@ -1,0 +1,51 @@
+name: R5 Atlas v0.4.0 Converter v2 integration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/r5-v040-converter.yml'
+      - 'tools/r5_v040_patch.py'
+      - 'tools/r5_v040_test.js'
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Validate Converter v2 before integration
+        run: |
+          node --check testing/lsd-converter-v2.js
+          node tools/r5_v040_test.js
+
+      - name: Integrate Converter v2 into testing tracker
+        run: python tools/r5_v040_patch.py
+
+      - name: Validate integrated testing build
+        shell: bash
+        run: |
+          node --check testing/lsd-converter-v2.js
+          node tools/r5_v040_test.js
+          python -m json.tool testing/version.json >/dev/null
+          grep -Fq 'App v0.4.0' testing/index.html
+          grep -Fq 'name="r5-app-version" content="0.4.0"' testing/index.html
+          grep -Fq '<script src="lsd-converter-v2.js"></script>' testing/index.html
+          grep -Fq 'LSDConverterV2.createConverterFromGzip' testing/index.html
+          grep -Fq 'converter.resolve(description)' testing/index.html
+          grep -Fq "'./lsd-converter-v2.js'" testing/sw.js
+          git diff --exit-code HEAD -- index.html assets
+
+      - name: Commit testing v0.4.0
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add testing/index.html testing/sw.js testing/version.json
+          git commit -m 'Integrate Alberta Converter v2 in testing v0.4.0'
+          git push origin HEAD:main
