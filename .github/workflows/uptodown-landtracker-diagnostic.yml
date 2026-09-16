@@ -13,25 +13,17 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Probe current Uptodown API client version
+      - name: Download current Uptodown client and inspect API constants
         shell: bash
         run: |
-          set -u
-          python - <<'PY'
-          import hashlib, time
-          secret='$(=a%·!45J&S'
-          hour=int(time.time()//3600*3600)
-          key=hashlib.sha256((secret+str(hour)).encode()).hexdigest()
-          open('/tmp/key','w').write(key)
-          PY
-          KEY=$(cat /tmp/key)
-          UA='Dalvik/2.1.0 (Linux; U; Android 14; SM-G955F Build/AP2A.240805.005)'
-          URL='https://www.uptodown.app/eapi/apps/byPackagename/com.Rocanda.LandTrackerPro'
-          for V in 738 737 736 735 734 733 732 731 730; do
-            echo "=== version $V ==="
-            curl -sS -D /tmp/h -o /tmp/b --max-time 30 -A "$UA" \
-              -H 'Identificador: Uptodown_Android' -H "Identificador-Version: $V" -H "APIKEY: $KEY" "$URL" || true
-            head -1 /tmp/h 2>/dev/null || true
-            head -c 300 /tmp/b 2>/dev/null || true
-            echo
+          set -euxo pipefail
+          curl -L --fail --retry 2 -A 'Mozilla/5.0' \
+            'https://www.apkba.com/uptodown-app-store/com.uptodown/download' -o /tmp/uptodown.apk
+          wc -c /tmp/uptodown.apk
+          sha256sum /tmp/uptodown.apk
+          file /tmp/uptodown.apk
+          unzip -t /tmp/uptodown.apk | tail -3
+          echo '--- relevant strings ---'
+          for f in $(unzip -Z1 /tmp/uptodown.apk | grep -E '^classes.*\.dex$'); do
+            unzip -p /tmp/uptodown.apk "$f" | strings | grep -E -C 4 'Uptodown_Android|Identificador-Version|APIKEY|\$\(=a%|apikey' || true
           done
