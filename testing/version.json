@@ -1,13 +1,9 @@
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "releasedAt": "2026-09-15",
-  "title": "Installable app and update controls",
+  "title": "Installed app controls cleanup",
   "notes": [
-    "R5 Atlas can now be installed on supported phones, tablets and computers.",
-    "Added a first-time choice for automatic updates or manual update notifications.",
-    "Automatic updates apply new releases and then show what changed.",
-    "Manual updates notify you when a release is available and show the patch notes before you update.",
-    "Added an App control for install and update settings.",
-    "Added version enforcement so future testing changes must also bump the app version."
+    "The Install app button is now hidden when R5 Atlas is already installed.",
+    "The Install app option remains available when R5 Atlas is opened in a browser and is not installed."
   ]
 }

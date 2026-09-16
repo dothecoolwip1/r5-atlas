@@ -238,7 +238,7 @@
       'R5 Atlas App',
       `<p><strong>Version:</strong> v${escapeHtml(BUILD_VERSION)}</p><p><strong>Status:</strong> ${escapeHtml(installedText)}</p><div class="r5-setting"><div><strong>Automatic updates</strong><p class="r5-small">Current setting: ${pref === 'yes' ? 'Yes' : pref === 'no' ? 'No — notify first' : 'Not selected'}</p></div></div>`,
       [
-        { label: 'Install app', className: 'r5-primary', onClick: () => { closeModal(); installApp(); } },
+        ...(isStandalone() ? [] : [{ label: 'Install app', className: 'r5-primary', onClick: () => { closeModal(); installApp(); } }]),
         { label: 'Auto updates: Yes', className: pref === 'yes' ? 'r5-good' : 'r5-muted', onClick: () => { setPreference('yes'); closeModal(); checkForUpdates(); } },
         { label: 'Auto updates: No', className: pref === 'no' ? 'r5-good' : 'r5-muted', onClick: () => { setPreference('no'); closeModal(); checkForUpdates(); } },
         { label: 'Close', className: 'r5-muted', onClick: closeModal }
