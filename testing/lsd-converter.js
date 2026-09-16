@@ -20,11 +20,11 @@ function parseLsd(input) {
   const [lsd, section, township, range, meridian] = match.slice(1).map(Number);
   for (const [name, value, min, max] of [
     ['LSD', lsd, 1, 16], ['Section', section, 1, 36],
-    ['Township', township, 1, 126], ['Range', range, 1, 30],
+    ['Township', township, 1, 126], ['Range', range, 1, 34],
   ]) {
     if (value < min || value > max) return fail('invalid_input', `${name} must be between ${min} and ${max}.`);
   }
-  if (![4, 5, 6].includes(meridian)) return fail('invalid_input', 'This Alberta converter supports W4, W5, and W6.');
+  if (![1, 2, 3, 4, 5, 6].includes(meridian)) return fail('invalid_input', 'Meridian must be between 1 and 6.');
   return {
     status: 'ok', input, lsd, section, township, range, meridian,
     normalized: `${pad(lsd, 2)}-${pad(section, 2)}-${pad(township, 3)}-${pad(range, 2)}-W${meridian}`,
@@ -33,7 +33,7 @@ function parseLsd(input) {
 }
 
 function parsePid(input) {
-  if (typeof input !== 'string' || !/^[456]\d{9}$/.test(input.trim())) {
+  if (typeof input !== 'string' || !/^[1-6]\d{9}$/.test(input.trim())) {
     return { status: 'unsupported_format', input, message: 'PID must contain exactly ten digits in M-RR-TTT-SS-LL order.' };
   }
   const p = input.trim();
@@ -201,9 +201,10 @@ function createConverter(input) {
   function resolve(parsed) {
     if (parsed.status !== 'ok') return parsed;
     const { meridian: m, range: r, township: t, section: s, lsd } = parsed;
+    const missing = () => ({ ...parsed, status: 'missing_record', message: 'No matching Alberta ATS record exists for this LSD. Check the range and meridian.' });
+    if (m < 4 || m > 6 || r > 30) return missing();
     const key = (((m - 4) * 30 + r - 1) * 126 + t - 1) * 36 + s - 1;
     const index = find(key);
-    const missing = () => ({ ...parsed, status: 'missing_record', message: 'No matching Alberta ATS record exists for this LSD. Check the range and meridian.' });
     if (index < 0) return missing();
     const record = decode(index), bit = 1 << (lsd - 1);
     if (record.ambiguous & bit) return { ...parsed, status: 'ambiguous_record', message: 'The source contains conflicting records for this LSD. No coordinate was selected.' };
