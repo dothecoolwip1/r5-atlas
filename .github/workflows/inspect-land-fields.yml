@@ -1,0 +1,37 @@
+name: Inspect land description controls
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/inspect-land-fields.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect testing tracker controls
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          text=Path('testing/index.html').read_text(encoding='utf-8')
+          terms=['Quarter','quarter','LSD','Section','Township','Range','Meridian','W4','W5','W6']
+          for term in terms:
+            print('\n###',term)
+            hits=list(re.finditer(re.escape(term),text,re.I))
+            print('hits',len(hits))
+            for m in hits[:12]:
+              a=max(0,m.start()-900);b=min(len(text),m.end()+1600)
+              print(text[a:b].replace('\n',' ')[:2600])
+              print('---')
+          pats=[r'<select[^>]*>.*?</select>',r'<input[^>]+(?:min|max|name|id|placeholder)[^>]*>',r'quarter\s*[:=][^,;\n]{0,200}',r'meridian\s*[:=][^,;\n]{0,200}']
+          for pat in pats:
+            print('\nPATTERN',pat)
+            for x in re.findall(pat,text,re.I|re.S)[:40]: print(x[:1200].replace('\n',' '))
+          PY
