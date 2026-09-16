@@ -1,0 +1,93 @@
+name: Finalize LandTracker Pro 1.5.7 HTML
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/landtracker-html-finalize.yml'
+      - 'tools/landtracker_html_finalize.py'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Install builder dependency
+        run: python -m pip install --disable-pip-version-check requests
+
+      - name: Download exact APK and build standalone data
+        run: python tools/landtracker_html_finalize.py
+
+      - name: Verify source hashes and runtime files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(sha256sum landtracker-pro-1-5-7-html/data/source/hf.mp3 | cut -d' ' -f1)" = "506fc5b38c904fca668a6fcca6c90294630e668c03b838ca82c619b8c31787d3"
+          test "$(sha256sum landtracker-pro-1-5-7-html/data/source/VN.mp3 | cut -d' ' -f1)" = "fe0d9c41ed176a5234b7c34ad8d23f13bda7f923feedb1995e8c84382bd1cf54"
+          test "$(sha256sum landtracker-pro-1-5-7-html/data/source/ltdb.db | cut -d' ' -f1)" = "6b746af2e2ac3e4c26435de8f3017e1e8e026a365a6d15169f1b8542f9809501"
+          test "$(sha256sum landtracker-pro-1-5-7-html/data/bcnts.tsv.gz | cut -d' ' -f1)" = "6ba8f415ad3f469bdacc96d8eb1b1744e9edbdaa27854e2d5c784d458eee32b9"
+          node --check landtracker-pro-1-5-7-html/converter-core.js
+          node --check landtracker-pro-1-5-7-html/app.js
+          python -m json.tool landtracker-pro-1-5-7-html/data/source-manifest.json >/dev/null
+          ! grep -q 'asset-icon-' landtracker-pro-1-5-7-html/index.html
+          grep -Fq "LandTrackerAssets['icon.png']='icon.png';" landtracker-pro-1-5-7-html/assets-inline.js
+          git diff --exit-code HEAD -- index.html testing assets
+
+      - name: Run converter regression tests
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          global.fetch=async function(url){
+            try{
+              const b=fs.readFileSync('landtracker-pro-1-5-7-html/'+String(url));
+              return new Response(b,{status:200});
+            }catch(_){
+              return new Response('not found',{status:404});
+            }
+          };
+          require('./landtracker-pro-1-5-7-html/converter-core.js');
+          (async()=>{
+            const e=new LandTrackerCore.LandTrackerEngine('data');
+            const tests=[
+              [{lsd:10,section:36,township:39,range:29,meridian:4,quarter:''},'N52.399559, W114.043401'],
+              [{lsd:10,section:36,township:39,range:28,meridian:4,quarter:''},'N52.399379, W113.900321'],
+              [{lsd:6,section:32,township:48,range:7,meridian:5,quarter:''},'N53.183275, W114.991913'],
+              [{lsd:10,section:36,township:39,range:2,meridian:4,quarter:''},'N52.399349, W110.157911']
+            ];
+            for(const [d,want] of tests){
+              const p=await e.convertDls(d);
+              const got=LandTrackerCore.formatLatLon(p);
+              if(got!==want)throw new Error(`${LandTrackerCore.formatDls(d)} => ${got}, expected ${want}`);
+            }
+            const b={quarter:'A',centizone:1,zoneBlock:'A',mapUnit:93,mapUnitSub:'G',mapSheet:1};
+            const bp=await e.convertBcnts(b);
+            if(!bp||bp.lat!==53.000002||bp.lon!==122.0125)throw new Error(`BCNTS regression failed: ${JSON.stringify(bp)}`);
+            const d={lsd:10,section:36,township:39,range:28,meridian:4,quarter:''};
+            const p=await e.convertDls(d);
+            const r=await e.reverse(p.lat,p.lon);
+            const reverseText=r&&LandTrackerCore.formatDls(r);
+            if(reverseText!=='10-36-39-28W4')throw new Error(`Reverse regression failed: ${reverseText}`);
+            console.log('LandTracker APK-only regression tests passed.');
+          })().catch(err=>{console.error(err);process.exit(1);});
+          NODE
+
+      - name: Commit standalone recreation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A landtracker-pro-1-5-7-html
+          if git diff --cached --quiet; then
+            echo 'No standalone changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Finalize APK-only LandTracker Pro 1.5.7 HTML recreation'
+          git push origin HEAD:main
