@@ -1,0 +1,68 @@
+name: Fetch exact LandTracker APK in browser
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/landtracker-browser-fetch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Download exact APK through public browser flow
+        run: |
+          cat > /tmp/fetch.mjs <<'JS'
+          import { chromium } from 'playwright';
+          import crypto from 'crypto';
+          import fs from 'fs';
+          const expected='04d4f80b44c74eeeea778ca94a6fd414ca080845202fcd3433f9adc8a3666815';
+          const browser=await chromium.launch({headless:true});
+          const context=await browser.newContext({acceptDownloads:true, userAgent:'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'});
+          const page=await context.newPage();
+          page.on('console',m=>console.log('PAGE',m.type(),m.text()));
+          await page.goto('https://landtracker-pro.en.uptodown.com/android/download',{waitUntil:'domcontentloaded',timeout:90000});
+          console.log('title',await page.title());
+          const btn=page.locator('#detail-download-button');
+          console.log('button count',await btn.count());
+          if(!await btn.count()) throw new Error('download button missing');
+          try {
+            const dlPromise=page.waitForEvent('download',{timeout:120000});
+            await btn.click();
+            const download=await dlPromise;
+            await download.saveAs('/tmp/landtracker.apk');
+          } catch(e) {
+            console.log('download wait failed',String(e));
+            await page.screenshot({path:'/tmp/uptodown.png',fullPage:true});
+            console.log('body snippet',(await page.locator('body').innerText()).slice(0,8000));
+            throw e;
+          } finally { await browser.close(); }
+          const data=fs.readFileSync('/tmp/landtracker.apk');
+          const sha=crypto.createHash('sha256').update(data).digest('hex');
+          console.log('bytes',data.length,'sha256',sha);
+          if(sha!==expected) throw new Error(`hash mismatch ${sha}`);
+          JS
+          node /tmp/fetch.mjs
+          mkdir -p /tmp/apkout
+          cp /tmp/landtracker.apk /tmp/apkout/
+      - name: Upload verified APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: landtracker-verified-apk
+          path: /tmp/apkout/landtracker.apk
+          retention-days: 1
