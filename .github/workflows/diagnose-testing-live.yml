@@ -1,0 +1,49 @@
+name: Diagnose Testing Live
+
+on:
+  push:
+    paths:
+      - '.github/workflows/diagnose-testing-live.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run live browser diagnostic
+        run: |
+          cat > /tmp/diagnose.mjs <<'JS'
+          import { chromium } from 'playwright';
+          const browser = await chromium.launch({headless:true});
+          const context = await browser.newContext({serviceWorkers:'allow'});
+          const page = await context.newPage();
+          const errors=[];
+          page.on('console', m => console.log('CONSOLE', m.type(), m.text()));
+          page.on('pageerror', e => { errors.push(String(e)); console.log('PAGEERROR', String(e)); });
+          page.on('requestfailed', r => console.log('REQUESTFAILED', r.url(), r.failure()?.errorText));
+          const url='https://dothecoolwip1.github.io/r5-atlas/testing/?diag='+Date.now();
+          const response=await page.goto(url,{waitUntil:'domcontentloaded',timeout:120000});
+          console.log('STATUS',response?.status());
+          console.log('TITLE',await page.title());
+          console.log('URL',page.url());
+          await page.waitForTimeout(15000);
+          console.log('BODY_TEXT', (await page.locator('body').innerText()).slice(0,4000));
+          console.log('HTML_LENGTH', (await page.content()).length);
+          console.log('BODY_CHILDREN', await page.locator('body').evaluate(el=>el.children.length));
+          console.log('META_VERSION', await page.locator('meta[name="r5-app-version"]').getAttribute('content').catch(()=>null));
+          console.log('SW_CONTROLLER', await page.evaluate(()=>!!navigator.serviceWorker?.controller));
+          await page.screenshot({path:'/tmp/testing-live.png',fullPage:true});
+          await browser.close();
+          if(errors.length) process.exitCode=2;
+          JS
+          node /tmp/diagnose.mjs
