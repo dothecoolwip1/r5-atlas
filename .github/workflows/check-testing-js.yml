@@ -1,0 +1,32 @@
+name: Check Testing JavaScript
+
+on:
+  push:
+    paths:
+      - '.github/workflows/check-testing-js.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Extract and check every inline script
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('testing/index.html').read_text(encoding='utf-8')
+          blocks=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',html,re.S|re.I)
+          print('inline scripts',len(blocks))
+          for i,b in enumerate(blocks):
+              p=Path(f'/tmp/inline-{i}.js')
+              p.write_text(b,encoding='utf-8')
+              print(i,len(b),p)
+          PY
+          for f in /tmp/inline-*.js; do echo "CHECK $f"; node --check "$f"; done
