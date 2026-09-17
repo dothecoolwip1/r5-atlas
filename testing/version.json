@@ -1,13 +1,10 @@
 {
-  "version": "0.5.0",
+  "version": "0.5.1",
   "releasedAt": "2026-09-17",
-  "title": "Hybrid Alberta LSD lookup",
+  "title": "Testing startup recovery",
   "notes": [
-    "Hybrid lookup now uses the bundled offline Alberta ATS coordinate pack first and the live Government of Alberta ATS service as a fallback when the local pack has no record.",
-    "Corrected live Legal SubDivision queries to the current Government of Alberta ATS layer 3 and LS field.",
-    "Corrected quarter-section live queries to layer 2 and section-centre live queries to layer 1.",
-    "Previously verified live coordinates are cached on the device and can be reused when offline.",
-    "GPS reverse lookup now queries the current Legal SubDivision layer instead of the obsolete layer mapping.",
-    "No coordinate is guessed: a result must come from the bundled ATS pack, the live Alberta ATS polygons, or a previously verified live result."
+    "Restored the last known working R5 Atlas testing shell after the v0.5.0 hybrid integration caused startup problems on the web app and installed PWA.",
+    "Kept the Alberta Converter v2 offline lookup, history, maps, install support, settings, and managed update system from the working v0.4.0 build.",
+    "Hybrid live fallback changes are temporarily isolated from the testing shell until they pass full browser and installed app validation."
   ]
 }
