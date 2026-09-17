@@ -1,13 +1,13 @@
 {
-  "version": "0.4.0",
-  "releasedAt": "2026-09-15",
-  "title": "Alberta legal land converter v2",
+  "version": "0.5.0",
+  "releasedAt": "2026-09-17",
+  "title": "Hybrid Alberta LSD lookup",
   "notes": [
-    "Rebuilt the testing legal-land lookup around Converter v2 while keeping the authoritative Alberta ATS v4.1 offline pack.",
-    "Added flexible LSD input parsing including dashes, spaces, slashes, labelled descriptions, and ten-digit PID input.",
-    "Added offline NE, NW, SE, SW and section-centre lookups derived only from complete authoritative LSD records; coordinates are never guessed.",
-    "Quarter and section lookups use the live Alberta polygon centre when online and fall back to the offline data when disconnected.",
-    "Added startup self-tests that block the converter if known records, parser variants, range isolation, or quarter/section lookups fail.",
-    "Improved missing-record errors so a valid-looking description cannot silently alias to a different range or meridian."
+    "Hybrid lookup now uses the bundled offline Alberta ATS coordinate pack first and the live Government of Alberta ATS service as a fallback when the local pack has no record.",
+    "Corrected live Legal SubDivision queries to the current Government of Alberta ATS layer 3 and LS field.",
+    "Corrected quarter-section live queries to layer 2 and section-centre live queries to layer 1.",
+    "Previously verified live coordinates are cached on the device and can be reused when offline.",
+    "GPS reverse lookup now queries the current Legal SubDivision layer instead of the obsolete layer mapping.",
+    "No coordinate is guessed: a result must come from the bundled ATS pack, the live Alberta ATS polygons, or a previously verified live result."
   ]
 }

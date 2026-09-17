@@ -1,7 +1,7 @@
 /* R5 Atlas service worker. Version is supplied by the registration URL. */
 const scriptUrl = new URL(self.location.href);
 const APP_VERSION = scriptUrl.searchParams.get('v') || 'unknown';
-const CACHE_NAME = `r5-atlas-${APP_VERSION}`;
+const CACHE_NAME = `r5-atlas-${APP_VERSION}-hybrid`;
 const PRECACHE = [
   './',
   './index.html',
