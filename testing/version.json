@@ -1,16 +1,15 @@
 {
-  "version": "0.8.1",
+  "version": "0.9.0",
   "releasedAt": "2026-09-20",
-  "title": "Pack 2 device-first saved LSD library",
+  "title": "Pack 3 universal field intelligence",
   "notes": [
-    "Moved saved LSD records into an IndexedDB device database with one canonical record per legal land description.",
-    "Automatically migrates existing browser history and LSD notes into the new device database when it is first opened.",
-    "Keeps field notes, favourite status, selected disposal, selected surface well, UWI, licensee and saved coordinates together with each LSD.",
-    "Tracks first visit, latest visit, total visit count and recent visit history for each saved LSD.",
-    "Added Saved LSD search, favourites-only filtering, multiple sort modes and one-tap favourite stars.",
-    "Expanded field notes with auto-save status, character count, copy and clear actions.",
-    "Added optional nearby-saved-LSD alerts with selectable 0.5, 1, 2 or 5 km radius. Alerts are off by default and only use device location while R5 Atlas is open.",
-    "Cached the Pack 2 IndexedDB and saved-location runtime in the PWA shell so saved LSDs remain available after an offline reload.",
-    "Final integration build includes the Pack 2 settings syntax fix and startup readiness gate verified by the architecture checks."
+    "Turned the map into the primary working home with one universal field search across Alberta LSDs, quarter sections, PIDs, GPS coordinates, saved LSDs, disposal facilities, companies and supported wells/UWIs.",
+    "Added direct ten-digit PID recognition in M-RR-TTT-SS-LL order using the existing Alberta legal-land converter.",
+    "Added ranked type-ahead suggestions with saved favourites, recent searches, paste recognition and context labels for each result type.",
+    "Universal well and company search uses live AER OneStop while online and falls back to the cached ST37 snapshot when live search is unavailable.",
+    "Added a compact field status strip showing online/offline state, live AER or dated ST37 fallback status, and GPS permission readiness without requesting location until a location feature is used.",
+    "Finalized Map, LSD, Wells, Disposals and Saved navigation with live state/count badges while keeping the map as the home state.",
+    "Expanded permanent saved LSD records with tags, hazards, offline availability and record-schema metadata while preserving notes, visits, favourites, selected disposal and selected well.",
+    "Cached the Pack 3 universal-search runtime and ST37 metadata in the PWA shell so status and saved-location search continue to work after an offline reload."
   ]
 }
