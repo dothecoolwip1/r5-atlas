@@ -244,16 +244,22 @@ jobs:
           await page.waitForFunction(()=>document.querySelector('#jobStatus')?.textContent?.includes('Job loaded:'),null,{timeout:45000});
           assert((await page.locator('#jobDetails').innerText()).includes(canonical),'Offline PID lookup did not resolve the expected LSD');
 
+          const offlineRecord=(await page.evaluate(()=>R5DeviceStore.getAllSavedLocations()))[0];
+          const offlineCompany=offlineRecord?.selectedWell?.licensee||offlineRecord?.licensee||recordCompany;
+          const offlineUwi=offlineRecord?.selectedWell?.uwi||offlineRecord?.uwi||recordUwi;
+          const normalizeWellId=value=>String(value||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+          assert(normalizeWellId(offlineUwi)===normalizeWellId(recordUwi),'Offline well reload replaced the saved UWI with a different well');
+
           const offlineCompanyResults=await page.evaluate(async query=>{
             await R5UniversalSearch.search(query);
             return R5UniversalSearch.getResults();
-          },recordCompany);
+          },offlineCompany);
           assert(offlineCompanyResults.some(x=>x.type==='company'),'Offline canonical-company search failed');
 
           const offlineWellResults=await page.evaluate(async query=>{
             await R5UniversalSearch.search(query);
             return R5UniversalSearch.getResults();
-          },recordUwi);
+          },offlineUwi);
           assert(offlineWellResults.some(x=>x.type==='well'),'Offline canonical-UWI search failed');
 
           const st37Results=await page.evaluate(async query=>{
