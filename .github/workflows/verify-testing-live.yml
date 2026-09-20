@@ -134,16 +134,20 @@ jobs:
           assert(record.offlineAvailable===true,'Permanent LSD record does not report offline availability');
           assert(record.locationRecordVersion===1,'Permanent LSD record schema version is missing');
           assert(record.visitCount>=2,'PID lookup did not add a visit');
+          const recordCompany=record.selectedWell?.licensee||record.licensee||savedCompany;
+          const recordUwi=record.selectedWell?.uwi||record.uwi||savedUwi;
+          assert(recordCompany,'Canonical record does not contain searchable company metadata');
+          assert(recordUwi,'Canonical record does not contain searchable UWI metadata');
 
-          await page.locator('#jobInput').fill(savedCompany);
+          await page.locator('#jobInput').fill(recordCompany);
           await page.waitForTimeout(350);
           const companyResults=await page.locator('#universalSearchResults').innerText();
           assert(companyResults.includes('Company'),'Saved company/operator was not recognized by universal search');
 
-          await page.locator('#jobInput').fill(savedUwi);
+          await page.locator('#jobInput').fill(recordUwi);
           await page.waitForTimeout(350);
           const wellResults=await page.locator('#universalSearchResults').innerText();
-          assert(wellResults.includes('Well'),'Saved UWI was not recognized by universal search');
+          assert(wellResults.includes('Well'),'Canonical UWI was not recognized by universal search');
 
           const facilityName=await page.evaluate(()=>facilities[0].name);
           await page.locator('#jobInput').fill(facilityName);
@@ -212,13 +216,13 @@ jobs:
           await page.waitForFunction(()=>document.querySelector('#jobStatus')?.textContent?.includes('Job loaded:'),null,{timeout:45000});
           assert((await page.locator('#jobDetails').innerText()).includes(canonical),'Offline PID lookup did not resolve the expected LSD');
 
-          await page.locator('#jobInput').fill(savedCompany);
+          await page.locator('#jobInput').fill(recordCompany);
           await page.waitForTimeout(300);
-          assert((await page.locator('#universalSearchResults').innerText()).includes('Company'),'Offline saved-company search failed');
+          assert((await page.locator('#universalSearchResults').innerText()).includes('Company'),'Offline canonical-company search failed');
 
-          await page.locator('#jobInput').fill(savedUwi);
+          await page.locator('#jobInput').fill(recordUwi);
           await page.waitForTimeout(300);
-          assert((await page.locator('#universalSearchResults').innerText()).includes('Well'),'Offline saved-UWI search failed');
+          assert((await page.locator('#universalSearchResults').innerText()).includes('Well'),'Offline canonical-UWI search failed');
 
           await page.locator('#jobInput').fill(facilityName);
           await page.waitForTimeout(350);
