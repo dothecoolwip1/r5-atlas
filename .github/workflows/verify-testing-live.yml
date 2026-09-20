@@ -148,6 +148,7 @@ jobs:
           records=await page.evaluate(()=>R5DeviceStore.getAllSavedLocations());
           assert(records.length===1,'IndexedDB contains duplicate canonical LSD records');
           let record=records[0];
+          console.log('Pack 2 record checkpoint:',JSON.stringify(record));
           assert(record.notes==='Pack 2 IndexedDB verification note','Field notes were not persisted to IndexedDB');
           assert(record.favorite===true,'Favourite status was not persisted');
           assert(Number(record.selectedDisposal)===1,'Selected disposal was not persisted');
