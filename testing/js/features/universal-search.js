@@ -128,6 +128,43 @@
     }).slice(0,8);
   }
 
+
+  function savedEntitySuggestions(q){
+    const query=String(q||'').toLowerCase().trim();
+    if(!query)return[];
+    const out=[];
+    const companies=new Set();
+    for(const h of history||[]){
+      const w=h.selectedWell||{};
+      const company=String(w.licensee||h.licensee||'').trim();
+      if(company&&company.toLowerCase().includes(query)&&!companies.has(company.toLowerCase())){
+        companies.add(company.toLowerCase());
+        out.push({
+          type:'company',key:'saved-company:'+company.toLowerCase(),label:company,value:company,
+          subtitle:'Company from saved LSD '+String(h.ats||''),tag:'Company',icon:'◉',score:h.favorite?109:99,
+          favorite:!!h.favorite,payload:{name:company}
+        });
+      }
+      const uwi=String(w.uwi||h.uwi||'').trim();
+      const licence=String(w.licence||'').trim();
+      const hay=[uwi,licence,w.licensee,h.licensee,w.surfaceDls,h.surfaceDls,h.ats].filter(Boolean).join(' ').toLowerCase();
+      if((uwi||licence)&&hay.includes(query)){
+        out.push({
+          type:'well',key:'saved-well:'+(uwi||licence)+'|'+String(h.key||h.id),label:uwi||('Licence '+licence),value:uwi||licence,
+          subtitle:[company,w.surfaceDls||h.surfaceDls||h.ats,'Saved LSD'].filter(Boolean).join(' • '),
+          tag:'Well',icon:'●',score:h.favorite?110:100,favorite:!!h.favorite,
+          payload:{
+            uwi:uwi,licence:licence,licensee:company,surfaceDls:w.surfaceDls||h.surfaceDls||h.ats,
+            lat:Number.isFinite(+w.lat)?+w.lat:(Number.isFinite(+h.lat)?+h.lat:null),
+            lng:Number.isFinite(+w.lng)?+w.lng:(Number.isFinite(+h.lng)?+h.lng:null)
+          }
+        });
+      }
+      if(out.length>=8)break;
+    }
+    return out;
+  }
+
   function facilitySuggestions(q){
     const query=String(q||'').toLowerCase().trim();
     if(!query)return[];
@@ -397,7 +434,7 @@
     let instant=[];
     const direct=directSuggestion(q);
     if(direct)instant.push(direct);
-    instant=instant.concat(historySuggestions(q),facilitySuggestions(q),loadedWellSuggestions(q),recentSuggestions(q));
+    instant=instant.concat(historySuggestions(q),savedEntitySuggestions(q),facilitySuggestions(q),loadedWellSuggestions(q),recentSuggestions(q));
 
     if(!q){
       const favs=historySuggestions('').filter(function(x){return x.favorite});
