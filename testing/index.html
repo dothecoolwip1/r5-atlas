@@ -125,19 +125,112 @@
 .company-only-popup b{font-size:12px}
 @media(max-width:560px){.h2s-tier-counts{grid-template-columns:1fr 1fr}.company-map-head{padding:9px 10px}.company-map-filters{padding:7px 8px;gap:5px}.company-type-filter{flex:1 1 calc(50% - 5px);justify-content:flex-start;padding:6px 8px;font-size:10px}.company-map-note{padding-bottom:max(9px,env(safe-area-inset-bottom))}}
 
+
+/* ===== V21 FIELD UI ===== */
+:root{
+  --v21-bg:#eef2f4;
+  --v21-surface:#ffffff;
+  --v21-ink:#162a36;
+  --v21-muted:#687b87;
+  --v21-line:#d8e1e6;
+  --v21-accent:#173f55;
+  --v21-accent-soft:#e7f0f5;
+  --v21-success:#1f7a55;
+  --v21-radius:16px;
+}
+body{background:var(--v21-bg)}
+.topbar{height:54px;padding:0 12px;background:linear-gradient(135deg,#102b3a,#1b465d);box-shadow:0 4px 18px rgba(13,31,42,.18)}
+.brand-logo{width:36px;height:36px}
+.brand-title{letter-spacing:.01em}
+.data-pill{border:0;background:rgba(255,255,255,.12);font-size:10px;padding:7px 10px}
+.map-shell{border-radius:20px;border:1px solid #d3dde3;box-shadow:0 12px 34px rgba(24,45,59,.11)}
+.map-search{padding:7px;border-radius:16px;box-shadow:0 10px 30px rgba(18,43,57,.18)}
+.map-search-row{gap:7px}
+.map-search input{height:50px;border-radius:12px;font-weight:650}
+.map-search .primary-btn{height:50px;min-width:82px;border-radius:12px;background:#163e54}
+.map-status{font-size:10.5px;padding:5px 5px 1px}
+.filter-chip{min-height:40px;border-radius:12px;font-weight:850}
+.map-action{box-shadow:0 5px 18px rgba(15,36,49,.2)}
+.map-bottom-card{border-radius:16px;padding:11px 12px}
+.panel,.card{border-color:var(--v21-line);box-shadow:0 6px 22px rgba(28,48,61,.06)}
+.card{border-radius:var(--v21-radius)}
+.v21-eyebrow{font-size:9px;letter-spacing:.11em;font-weight:950;color:#71838d;margin-bottom:4px}
+.v21-mini-badge,.v21-source-badge,.v21-count-badge{display:inline-flex;align-items:center;min-height:28px;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900;white-space:nowrap}
+.v21-mini-badge{background:#edf3f6;color:#395664}
+.v21-source-badge{background:#e9f7f0;color:#1f6f4e;border:1px solid #cce9db}
+.v21-count-badge{background:#edf3f6;color:#405864}
+.v21-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 15px}
+.v21-panel-head h3{font-size:17px}
+.v21-head-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.v21-control-label{font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.08em;color:#71838d;margin-bottom:7px}
+.well-toolbar{padding:12px 14px;background:#fff}
+.v21-radius-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.v21-radius-row .chip{width:100%;min-height:42px;border-radius:10px;padding:6px 7px}
+.v21-radius-row .chip.active{background:#173f55;box-shadow:0 4px 12px rgba(23,63,85,.18)}
+.v21-lsd-chip{background:#f5f8fa}
+.well-search-wrap{grid-template-columns:minmax(0,1fr) auto auto;margin-top:9px}
+.search-input{height:44px;border-radius:11px;background:#fbfcfd}
+.status{border-radius:11px}
+.well-grid{gap:9px}
+.well-card{border-radius:15px;box-shadow:0 3px 12px rgba(27,48,62,.05)}
+.well-body{padding:13px}
+.well-surface-value{font-size:17px}
+.actions button,.actions a{min-height:38px;display:inline-flex;align-items:center}
+.history-list{padding:10px;gap:9px}
+.history-item{border-radius:14px;padding:12px;background:#fff;box-shadow:0 3px 12px rgba(27,48,62,.045)}
+.history-item>b{font-size:13px}
+.v21-active-lsd{border-top:3px solid #1f6687}
+.mobile-nav{border-radius:18px;height:64px;box-shadow:0 10px 28px rgba(18,39,52,.22)}
+.mobile-nav button{position:relative;font-size:9.5px;transition:background .15s,color .15s}
+.mobile-nav button.active{background:#e8f0f4;color:#123f57}
+.mobile-nav button.active:after{content:"";position:absolute;left:28%;right:28%;bottom:2px;height:3px;border-radius:999px;background:#173f55}
+@media(max-width:720px){
+  body{padding-bottom:78px}
+  .topbar{height:50px}
+  .data-pill{max-width:48vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .map-shell{margin:6px;border-radius:16px}
+  #map{height:72svh;min-height:520px}
+  .map-search{top:8px;width:calc(100% - 12px)}
+  .map-search input{height:48px;font-size:14px}
+  .map-search .primary-btn{height:48px;min-width:68px}
+  .map-filter-dock-v20{top:68px}
+  .content>.section.mobile-open{background:#f5f7f9}
+  .mobile-sheet-head{height:54px;padding:0 14px;border-bottom:1px solid var(--v21-line);background:#fff}
+  .mobile-sheet-head b{font-size:15px}
+  .v21-panel-head{align-items:flex-start;padding:13px 12px}
+  .v21-panel-head .smallnote{max-width:245px}
+  .v21-source-badge{font-size:9px;min-height:26px;max-width:145px;overflow:hidden;text-overflow:ellipsis}
+  .well-toolbar{padding:11px 10px}
+  .v21-radius-row{display:flex;overflow-x:auto;gap:6px;padding-bottom:2px;scrollbar-width:none}
+  .v21-radius-row::-webkit-scrollbar{display:none}
+  .v21-radius-row .chip{flex:0 0 auto;min-width:70px;min-height:42px}
+  .v21-radius-row .v21-lsd-chip{min-width:88px}
+  .well-search-wrap{grid-template-columns:minmax(0,1fr) auto}
+  .well-search-wrap #hideWells{grid-column:1/-1;width:100%}
+  .history-item{grid-template-columns:1fr}
+  .history-item .actions{margin-top:2px}
+  .history-item .actions button{flex:1}
+  .dashboard-grid{gap:9px}
+  .card{padding:12px}
+  .mobile-nav{left:6px;right:6px;bottom:6px}
+}
+@media(min-width:721px){
+  .map-shell{margin:12px}
+  .content{padding:4px 12px 30px}
+}
 </style>
-<meta name="r5-app-version" content="0.5.7"><meta name="theme-color" content="#16191f"><link rel="manifest" href="manifest.webmanifest">
+<meta name="r5-app-version" content="0.6.0"><meta name="theme-color" content="#16191f"><link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
 <header class="topbar">
   <div class="brand"><img class="brand-logo" src="assets/r5-atlas-logo.png" alt="R5 Atlas logo"><div class="brand-text"><div class="brand-title">R5 Atlas</div><div class="brand-sub">From Surface to Disposal.</div></div></div>
-  <div class="data-pill">AER Live • ST37 fallback • App v0.5.7</div>
+  <div class="data-pill">AER Live • ST37 fallback • App v0.6.0</div>
 </header>
 <div class="page">
   <section id="mapSection" class="map-shell">
     <div id="map"></div>
     <div class="map-search">
-      <div class="map-search-row"><input id="jobInput" aria-label="Job location" placeholder="LSD, quarter section or GPS"><button id="findJob" class="primary-btn">Find</button></div>
+      <div class="map-search-row"><input id="jobInput" aria-label="Job location" placeholder="Search LSD, quarter section or GPS"><button id="findJob" class="primary-btn">Find</button></div>
       <div id="jobStatus" class="map-status">Enter a job location or tap the map.</div>
     </div>
     <div id="facilityCategoryFilters" class="map-filter-dock-v20" aria-label="Disposal types">
@@ -160,19 +253,20 @@
     <section id="jobSection" class="section"><div class="mobile-sheet-head"><b>Job & Notes</b><button type="button" data-sheet-close aria-label="Close">×</button></div>
       <div id="jobArea" class="dashboard-grid hidden">
         <div class="stack">
-          <div class="card"><div class="card-title-row"><h3>Active Job</h3><span class="smallnote">Alberta ATS</span></div><div id="jobDetails" class="kv"></div><div class="actions"><button id="copyJob">Copy Job Info</button><a id="jobMaps" target="_blank" rel="noopener">Open in Google Maps</a></div></div>
-          <div class="card"><div class="card-title-row"><h3>Job Notes</h3><span id="noteSaveState" class="save-state saved">Saved</span></div><textarea id="jobNotes" class="notes" placeholder="Gate codes, contacts, pricing, disposal instructions, job notes..."></textarea><div class="smallnote">Notes save automatically on this device.</div></div>
+          <div class="card v21-active-lsd"><div class="card-title-row"><div><div class="v21-eyebrow">ACTIVE LOCATION</div><h3>Active LSD</h3></div><span class="v21-mini-badge">Alberta ATS</span></div><div id="jobDetails" class="kv"></div><div class="actions"><button id="copyJob">Copy Job Info</button><a id="jobMaps" target="_blank" rel="noopener">Open in Google Maps</a></div></div>
+          <div class="card"><div class="card-title-row"><div><div class="v21-eyebrow">SAVED WITH THIS LSD</div><h3>LSD Notes</h3></div><span id="noteSaveState" class="save-state saved">Saved</span></div><textarea id="jobNotes" class="notes" placeholder="Gate codes, contacts, pricing, disposal instructions, job notes..."></textarea><div class="smallnote">Notes save automatically on this device.</div></div>
         </div>
         <div class="card"><div class="card-title-row"><h3>Nearest Disposal Options</h3><span class="smallnote">Driving distance</span></div><div id="routeStatus" class="status">Select a job to calculate road routes.</div><div id="nearestDisposals" class="results"></div><div id="selectedDisposal" class="selected-box hidden"></div></div>
       </div>
     </section>
 
     <section id="wellsPanel" class="section panel hidden"><div class="mobile-sheet-head"><b>Surface Wells</b><button type="button" data-sheet-close aria-label="Close">×</button></div>
-      <div class="well-panel-head"><div class="card-title-row"><div><h3 style="margin:0">AER Surface Wells</h3><div class="smallnote">Online uses live AER OneStop well licences. Offline falls back to the saved ST37 snapshot.</div></div><div id="st37Status" class="smallnote">Live AER when online • ST37 fallback</div></div></div>
+      <div class="well-panel-head v21-panel-head"><div><div class="v21-eyebrow">AER WELL DATA</div><h3 style="margin:0">Surface Wells</h3><div class="smallnote">Live AER OneStop when online. Latest saved ST37 data when offline.</div></div><div id="st37Status" class="v21-source-badge">Live AER when online</div></div>
       <div class="well-toolbar">
-        <div class="toolbar-row"><button class="chip well-radius active" data-mode="lsd">This LSD</button><button class="chip well-radius" data-km="1">1 km</button><button class="chip well-radius" data-km="2">2 km</button><button class="chip well-radius" data-km="5">5 km</button><button class="chip well-radius" data-km="10">10 km</button><button id="hideWells" class="mini-btn">Hide Wells</button></div>
-        <div class="toolbar-row well-search-wrap"><input id="wellSearch" class="search-input" placeholder="Search UWI, licence, well, licensee or status"><button id="clearWellSearch" class="mini-btn">Clear</button></div>
-        <div id="wellStatus" class="status">Choose a job to load nearby wells.</div>
+        <div class="v21-control-label">Search area</div>
+        <div class="toolbar-row v21-radius-row"><button class="chip well-radius active" data-km="0.5">0.5 km</button><button class="chip well-radius" data-km="1">1 km</button><button class="chip well-radius" data-km="2">2 km</button><button class="chip well-radius" data-km="5">5 km</button><button class="chip well-radius" data-km="10">10 km</button><button class="chip well-radius v21-lsd-chip" data-mode="lsd">Exact LSD</button></div>
+        <div class="toolbar-row well-search-wrap"><input id="wellSearch" class="search-input" placeholder="Filter by UWI, licence, well or company"><button id="clearWellSearch" class="mini-btn">Clear</button><button id="hideWells" class="mini-btn">Hide pins</button></div>
+        <div id="wellStatus" class="status">Choose an LSD to load nearby wells.</div>
       </div>
       <div id="wellGrid" class="well-grid"></div>
     </section>
@@ -185,15 +279,15 @@
       <div id="facilityGrid" class="facility-grid"></div></div>
     </section>
 
-    <section id="historySection" class="section panel"><div class="mobile-sheet-head"><b>Job History</b><button type="button" data-sheet-close aria-label="Close">×</button></div>
-      <div class="well-panel-head"><div class="card-title-row"><div><h3 style="margin:0">Job History & Notes</h3><div class="smallnote">Saved locally in this browser.</div></div><button id="clearHistory" class="mini-btn">Clear History</button></div></div>
+    <section id="historySection" class="section panel"><div class="mobile-sheet-head"><b>Saved LSDs</b><button type="button" data-sheet-close aria-label="Close">×</button></div>
+      <div class="well-panel-head v21-panel-head"><div><div class="v21-eyebrow">FIELD MEMORY</div><h3 style="margin:0">Saved LSDs</h3><div class="smallnote">One record per LSD. Notes and search history stay together on this device.</div></div><div class="v21-head-actions"><span id="historyCountBadge" class="v21-count-badge">0 saved</span><button id="clearHistory" class="mini-btn">Clear saved</button></div></div>
       <div id="historyList" class="history-list"></div>
     </section>
   </main>
 </div>
 
 <nav class="mobile-nav" aria-label="Page navigation">
-  <button data-scroll="mapSection"><span>⌖</span>Map</button><button data-scroll="jobSection"><span>▣</span>Job</button><button data-scroll="wellsPanel"><span>●</span>Wells</button><button data-scroll="facilitiesSection"><span>◆</span>Disposals</button><button data-scroll="historySection"><span>≡</span>History</button>
+  <button data-scroll="mapSection"><span>⌖</span>Map</button><button data-scroll="jobSection"><span>▣</span>LSD</button><button data-scroll="wellsPanel"><span>●</span>Wells</button><button data-scroll="facilitiesSection"><span>◆</span>Disposals</button><button data-scroll="historySection"><span>≡</span>Saved</button>
 </nav>
 
 <div id="wellDetailBackdrop" class="well-detail-backdrop hidden" role="presentation"><section class="well-detail" role="dialog" aria-modal="true" aria-labelledby="wellDetailTitle"><div class="well-detail-head"><h2 id="wellDetailTitle">Well Details</h2><button id="wellDetailClose" class="well-detail-close" type="button" aria-label="Close">×</button></div><div id="wellDetailBody" class="well-detail-body"></div></section></div>
@@ -267,7 +361,7 @@ const AER_SUMMARY_BASE='https://www2.aer.ca/t/Production/views/PRD_0100_Well_Sum
 const HISTORY_KEY='albertaOilfieldFieldMapHistoryV15';
 
 let activeCats={red:true,blue:false,yellow:false};let job=null,jobMarker=null,jobPolygon=null,selectedDisposal=null;let routes=new Map(),routeRequest=0;let history=[];let currentHistoryId=null;
-let wellMode={type:'lsd'};let wellsVisible=true,loadedPads=[];let wellMarkers=[];let st37Ready=false,st37Promise=null;let surfaceGrid=new Map(),boresByLicence=new Map();let companyCache=new Map(),companyState=null,companyRenderLimit=100;let companyMapInstance=null,companyMapLayer=null,companyMapProfile=null,companyMapTypeFilters={active:true,issued:true,abandoned:true,suspended:true,cancelled:true,other:true};let noteSaveTimer=null;
+let wellMode={type:'radius',km:0.5};let wellsVisible=true,loadedPads=[];let wellMarkers=[];let st37Ready=false,st37Promise=null;let surfaceGrid=new Map(),boresByLicence=new Map();let companyCache=new Map(),companyState=null,companyRenderLimit=100;let companyMapInstance=null,companyMapLayer=null,companyMapProfile=null,companyMapTypeFilters={active:true,issued:true,abandoned:true,suspended:true,cancelled:true,other:true};let noteSaveTimer=null;
 
 const map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([53.65,-114.4],5);L.control.zoom({position:'bottomright'}).addTo(map);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);L.control.scale({imperial:false}).addTo(map);
@@ -401,7 +495,7 @@ function geometryLatLng(g){return(g?.rings||[]).map(r=>r.map(([lng,lat])=>[lat,l
 function pointInRing(lat,lng,ring){let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const xi=ring[i][0],yi=ring[i][1],xj=ring[j][0],yj=ring[j][1];const hit=((yi>lat)!=(yj>lat))&&(lng<(xj-xi)*(lat-yi)/(yj-yi+1e-15)+xi);if(hit)inside=!inside}return inside}
 function pointInJobPolygon(lat,lng){const ring=job?.geometry?.rings?.[0];return ring?pointInRing(lat,lng,ring):false}
 async function performJobLookup(parsed){if(parsed.type==='ats')return lookupATS(parsed);if(parsed.type==='quarter')return lookupQuarter(parsed);if(parsed.type==='gps')return identifyPoint(parsed.lat,parsed.lng);throw Error('Use LSD, quarter section, or GPS coordinates.');}
-async function setJob(result,{save=true}={}){job=result;selectedDisposal=null;routes.clear();clearWellMarkers();document.getElementById('jobArea').classList.remove('hidden');document.getElementById('wellsPanel').classList.remove('hidden');if(jobMarker)map.removeLayer(jobMarker);if(jobPolygon)map.removeLayer(jobPolygon);jobMarker=L.marker([job.lat,job.lng],{icon:makeJobIcon()}).addTo(map).bindPopup(`<b>JOB</b><br>${esc(job.ats)}`);if(job.geometry?.rings)jobPolygon=L.polygon(geometryLatLng(job.geometry),{color:'#111',weight:3,fillOpacity:.06}).addTo(map);const layers=[jobMarker];if(jobPolygon)layers.push(jobPolygon);map.fitBounds(L.featureGroup(layers).getBounds().pad(.35),{maxZoom:14});document.getElementById('jobDetails').innerHTML=`<b>ATS</b><span>${esc(job.ats)}</span><b>GPS</b><span class="mono">${job.lat.toFixed(6)}, ${job.lng.toFixed(6)}</span>`;document.getElementById('jobMaps').href=mapsSearch(job.lat,job.lng);document.getElementById('jobStatus').textContent=`Job loaded: ${job.ats}`;document.getElementById('jobStatus').className='map-status ok';if(save)saveJobHistory();await calculateRoutes();await loadWells();renderFacilities();}
+async function setJob(result,{save=true}={}){job=result;selectedDisposal=null;routes.clear();clearWellMarkers();document.getElementById('jobArea').classList.remove('hidden');document.getElementById('wellsPanel').classList.remove('hidden');if(jobMarker)map.removeLayer(jobMarker);if(jobPolygon)map.removeLayer(jobPolygon);jobMarker=L.marker([job.lat,job.lng],{icon:makeJobIcon()}).addTo(map).bindPopup(`<b>JOB</b><br>${esc(job.ats)}`);if(job.geometry?.rings)jobPolygon=L.polygon(geometryLatLng(job.geometry),{color:'#111',weight:3,fillOpacity:.06}).addTo(map);const layers=[jobMarker];if(jobPolygon)layers.push(jobPolygon);map.fitBounds(L.featureGroup(layers).getBounds().pad(.35),{maxZoom:14});document.getElementById('jobDetails').innerHTML=`<b>ATS</b><span>${esc(job.ats)}</span><b>GPS</b><span class="mono">${job.lat.toFixed(6)}, ${job.lng.toFixed(6)}</span>${existing?`<b>Last searched</b><span>${esc(formatHistoryDate(priorLast||existing.created))}</span><b>Searches</b><span>${Math.max(1,Number(existing.searchCount)||1)}</span>`:''}`;document.getElementById('jobMaps').href=mapsSearch(job.lat,job.lng);document.getElementById('jobStatus').textContent=`Job loaded: ${job.ats}`;document.getElementById('jobStatus').className='map-status ok';if(save)saveJobHistory();await calculateRoutes();await loadWells();renderFacilities();}
 async function calculateRoutes(){if(!job)return;const id=++routeRequest;const coords=[[job.lng,job.lat],...facilities.map(f=>[f.lng,f.lat])].map(x=>x.join(',')).join(';');document.getElementById('routeStatus').textContent='Calculating driving distance to disposal facilities...';try{const d=await fetchJson(`${ROUTING_SERVICE}/${coords}?sources=0&annotations=distance,duration`,22000);if(id!==routeRequest)return;routes.clear();facilities.forEach((f,i)=>{const dist=d.distances?.[0]?.[i+1],dur=d.durations?.[0]?.[i+1];if(Number.isFinite(dist)&&Number.isFinite(dur))routes.set(f.n,{distance:dist,duration:dur})});document.getElementById('routeStatus').textContent=`Road routes loaded for ${routes.size} facilities.`;document.getElementById('routeStatus').className='status ok';}catch(e){document.getElementById('routeStatus').textContent='Road routing unavailable right now. Directions buttons still open Google Maps.';document.getElementById('routeStatus').className='status error';}renderNearest();renderFacilities();}
 function renderNearest(){if(!job)return;const list=facilities.filter(f=>activeCats[f.c]).map(f=>({f,r:routes.get(f.n)})).filter(x=>x.r).sort((a,b)=>a.r.distance-b.r.distance).slice(0,8);document.getElementById('nearestDisposals').innerHTML=list.map(({f,r})=>`<div class="recommend ${selectedDisposal===f.n?'selected':''}"><div><b>#${f.n} ${esc(f.name)}</b><div class="meta">${esc(f.type)} • ${esc(f.place)}</div><div class="actions"><button data-pick-disposal="${f.n}">${selectedDisposal===f.n?'Selected':'Select'}</button><a target="_blank" rel="noopener" href="${directions(job.lat,job.lng,f.lat,f.lng)}">Directions</a></div></div><div class="drive">${(r.distance/1000).toFixed(1)} km<div class="sub">${formatDuration(r.duration)}</div></div></div>`).join('')||'<div class="status">No routed facilities in the selected disposal types.</div>';document.querySelectorAll('[data-pick-disposal]').forEach(b=>b.onclick=()=>selectDisposal(Number(b.dataset.pickDisposal)));}
 function selectDisposal(n){selectedDisposal=n;const f=facilities.find(x=>x.n===n),r=routes.get(n);const box=document.getElementById('selectedDisposal');box.classList.remove('hidden');box.innerHTML=`<h4>Selected Disposal: #${f.n} ${esc(f.name)}</h4><div class="sub">${esc(f.place)}${r?` • ${(r.distance/1000).toFixed(1)} km • ${formatDuration(r.duration)}`:''}</div><div class="actions"><a target="_blank" rel="noopener" href="${directions(job.lat,job.lng,f.lat,f.lng)}">Directions Job → Disposal</a><a href="tel:${f.phone.split('/')[0].replace(/[^0-9+]/g,'')}">Call</a></div>`;saveJobHistory(true);renderNearest();renderFacilities();}
@@ -722,6 +816,8 @@ function updateHistorySurfaceInfo(p=loadedPads[0]){
 }
 function renderHistory(){
   const el=document.getElementById('historyList');
+  const countBadge=document.getElementById('historyCountBadge');
+  if(countBadge)countBadge.textContent=`${history.length} saved`;
   el.innerHTML=history.map(h=>{
     const main=`${h.surfaceDls||h.ats}${h.licensee?` - ${h.licensee}`:''}`;
     const count=Math.max(1,Number(h.searchCount)||1);
@@ -925,7 +1021,7 @@ function toggleAtsOverlay(){atsOverlayOn=!atsOverlayOn;const b=document.getEleme
 
 document.getElementById('directorySearch').oninput=renderFacilities;document.getElementById('clearDirectorySearch').onclick=()=>{document.getElementById('directorySearch').value='';renderFacilities()};document.getElementById('fitFacilities').onclick=()=>{const ms=facilities.filter(f=>activeCats[f.c]).map(f=>facilityMarkers.get(f.n)).filter(m=>map.hasLayer(m));if(ms.length)map.fitBounds(L.featureGroup(ms).getBounds().pad(.1))};document.querySelectorAll('#facilityCategoryFilters .filter-chip').forEach(b=>b.onclick=()=>{activeCats[b.dataset.cat]=!activeCats[b.dataset.cat];renderFacilities();if(job)renderNearest()});
 document.getElementById('findJob').onclick=async()=>{const p=parseJobInput(document.getElementById('jobInput').value);document.getElementById('jobStatus').textContent='Looking up Alberta ATS...';try{currentHistoryId=null;document.getElementById('jobNotes').value='';setNoteSaveState('Saved','saved');await setJob(await performJobLookup(p))}catch(e){document.getElementById('jobStatus').textContent=e.message;document.getElementById('jobStatus').className='map-status error'}};document.getElementById('jobInput').onkeydown=e=>{if(e.key==='Enter')document.getElementById('findJob').click()};document.getElementById('myLocation').onclick=useCurrentLocation;document.getElementById('clearJob').onclick=clearJob;document.getElementById('jobNotes').oninput=queueNoteSave;document.getElementById('jobNotes').onblur=()=>saveJobHistory(true);document.getElementById('copyJob').onclick=async()=>{if(!job)return;const f=selectedDisposal?facilities.find(x=>x.n===selectedDisposal):null;const txt=`Job: ${job.ats}\nGPS: ${job.lat.toFixed(6)}, ${job.lng.toFixed(6)}${f?`\nDisposal: ${f.name}`:''}\nNotes: ${document.getElementById('jobNotes').value||''}`;try{await navigator.clipboard.writeText(txt)}catch{prompt('Copy job info:',txt)}};document.getElementById('clearHistory').onclick=()=>{if(confirm('Clear all saved job history and saved notes?')){history=[];notesStore={};localStorage.removeItem(HISTORY_KEY);localStorage.removeItem(NOTES_KEY);renderHistory()}};
-document.querySelectorAll('.well-radius').forEach(b=>b.onclick=()=>{document.querySelectorAll('.well-radius').forEach(x=>x.classList.remove('active'));b.classList.add('active');wellMode=b.dataset.mode==='lsd'?{type:'lsd'}:{type:'radius',km:+b.dataset.km};loadWells()});document.getElementById('hideWells').onclick=()=>{wellsVisible=!wellsVisible;document.getElementById('hideWells').textContent=wellsVisible?'Hide Wells':'Show Wells';renderWells()};document.getElementById('wellSearch').oninput=renderWells;document.getElementById('clearWellSearch').onclick=()=>{document.getElementById('wellSearch').value='';renderWells()};
+document.querySelectorAll('.well-radius').forEach(b=>b.onclick=()=>{document.querySelectorAll('.well-radius').forEach(x=>x.classList.remove('active'));b.classList.add('active');wellMode=b.dataset.mode==='lsd'?{type:'lsd'}:{type:'radius',km:+b.dataset.km};loadWells()});document.getElementById('hideWells').onclick=()=>{wellsVisible=!wellsVisible;document.getElementById('hideWells').textContent=wellsVisible?'Hide pins':'Show pins';renderWells()};document.getElementById('wellSearch').oninput=renderWells;document.getElementById('clearWellSearch').onclick=()=>{document.getElementById('wellSearch').value='';renderWells()};
 document.getElementById('companyClose').onclick=closeCompanyProfile;document.getElementById('companyMapClose').onclick=closeCompanyWellsMap;document.getElementById('companyMapBackdrop').onclick=e=>{if(e.target.id==='companyMapBackdrop')closeCompanyWellsMap()};document.getElementById('companyBackdrop').onclick=e=>{if(e.target.id==='companyBackdrop')closeCompanyProfile()};document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('companyBackdrop').classList.contains('hidden'))closeCompanyProfile()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('companyMapBackdrop').classList.contains('hidden'))closeCompanyWellsMap()});document.querySelectorAll('[data-scroll]').forEach(b=>b.onclick=()=>b.dataset.scroll==='mapSection'?closeMobileSheets():openMobileSheet(b.dataset.scroll));window.addEventListener('beforeunload',()=>{if(job)saveJobHistory(true)});
 map.on('click',async e=>{if(!confirm(`Use ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)} as the job location?`))return;document.getElementById('jobStatus').textContent='Identifying clicked location...';try{currentHistoryId=null;document.getElementById('jobNotes').value='';setNoteSaveState('Saved','saved');await setJob(await identifyPoint(e.latlng.lat,e.latlng.lng))}catch(err){document.getElementById('jobStatus').textContent=err.message;document.getElementById('jobStatus').className='map-status error'}});
 
