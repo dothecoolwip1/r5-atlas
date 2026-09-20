@@ -59,7 +59,12 @@ jobs:
               ['git', 'diff', '--name-only', 'HEAD^', 'HEAD', '--', 'testing'], text=True
           ).splitlines() if has_parent else []
 
-          meaningful = [p for p in changed if p != 'testing/version.json']
+          generated_data = {
+              'testing/data/st37-meta.json',
+              'testing/data/st37-surface.txt.gz',
+              'testing/data/st37-bore.txt.gz',
+          }
+          meaningful = [p for p in changed if p != 'testing/version.json' and p not in generated_data]
           if meaningful and old_version == version:
               raise SystemExit(
                   f'Testing app changed ({", ".join(meaningful)}) but version stayed at {version}. '
