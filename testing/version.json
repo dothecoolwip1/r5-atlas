@@ -1,13 +1,13 @@
 {
-  "version": "0.5.7",
+  "version": "0.6.0",
   "releasedAt": "2026-09-20",
-  "title": "Persistent LSD records and automated ST37 refresh",
+  "title": "Field UI redesign and 0.5 km well search",
   "notes": [
-    "Searching the same LSD now reopens and updates one persistent saved record instead of creating duplicates.",
-    "Notes, disposal choice, saved surface well information, first searched time, last searched time, and total search count remain attached to that LSD.",
-    "Existing duplicate LSD history entries are merged automatically while preserving saved information.",
-    "Online well searches query the live AER OneStop Well Licences layer first and the Wells panel identifies the live source.",
-    "The offline ST37 fallback now uses automatically refreshed compact files when available, with the legacy August 2026 snapshot retained only as a backup.",
-    "A scheduled GitHub updater checks the official AER ST37 Excel source daily and rebuilds the offline fallback when AER publishes a changed dataset."
+    "The default nearby well search radius is now 0.5 km, with 1, 2, 5, 10 km and Exact LSD available beside it.",
+    "Reworked the mobile Wells screen into a clearer search-area selector, well filter, pin toggle, live-data source badge, and cleaner result cards.",
+    "Renamed Job History to Saved LSDs so the interface matches the new one-record-per-LSD behaviour.",
+    "Saved LSDs now show a record count and the active LSD panel shows previous search date and search count when available.",
+    "Refined the map search, top bar, bottom navigation, cards, buttons, spacing, shadows, and mobile bottom sheets for faster one-hand field use.",
+    "The well data source remains explicit: live AER OneStop online with the automatically refreshed ST37 data as offline fallback."
   ]
 }
