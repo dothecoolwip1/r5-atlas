@@ -239,12 +239,14 @@
     const autoText = pref === 'yes' ? 'On' : pref === 'no' ? 'Off, notify first' : 'Not selected';
     const nearby = globalThis.R5NearbyAlerts?.getStatus?.() || { enabled: false, radiusKm: 0.5, watching: false };
     const nearbyText = nearby.enabled ? `On at ${nearby.radiusKm} km` : `Off, ${nearby.radiusKm} km radius`;
+    const fieldModeOn = !!globalThis.R5FieldUI?.getFieldMode?.();
     showModal(
       'Settings',
       `<p><strong>R5 Atlas v${escapeHtml(BUILD_VERSION)}</strong></p><p class="r5-small">${escapeHtml(installedText)}</p>
        <div class="r5-settings-section">App</div>
        <div class="r5-settings-list">
          <div class="r5-settings-row"><strong>Automatic updates</strong><span class="r5-live">${escapeHtml(autoText)}</span></div>
+         <div class="r5-settings-row"><strong>Field Mode</strong><span class="${fieldModeOn ? 'r5-live' : ''}">${fieldModeOn ? 'On' : 'Off'}</span></div>
          <div class="r5-settings-row"><strong>Mode</strong><span>${escapeHtml(installedText)}</span></div>
          <div class="r5-settings-row"><strong>Offline LSD pack</strong><span class="r5-live">Bundled and cached</span></div>
          <div class="r5-settings-row"><strong>Saved LSD storage</strong><span class="r5-live">IndexedDB device database</span></div>
@@ -263,6 +265,15 @@
           className: nearby.enabled ? 'r5-muted' : 'r5-good',
           onClick: async () => {
             await globalThis.R5NearbyAlerts.setEnabled(!nearby.enabled);
+            closeModal();
+            openAppSettings();
+          }
+        }] : []),
+        ...(globalThis.R5FieldUI ? [{
+          label: fieldModeOn ? 'Field Mode: Off' : 'Field Mode: On',
+          className: fieldModeOn ? 'r5-good' : 'r5-muted',
+          onClick: () => {
+            globalThis.R5FieldUI.setFieldMode(!fieldModeOn);
             closeModal();
             openAppSettings();
           }
@@ -296,8 +307,11 @@
     gear.setAttribute('aria-label', 'R5 Atlas settings');
     gear.setAttribute('title', 'Settings');
     gear.addEventListener('click', openAppSettings);
+    const topbarActions = document.querySelector('.topbar-actions');
     const versionBadge = findVersionBadge();
-    if (versionBadge?.parentElement) {
+    if (topbarActions) {
+      topbarActions.appendChild(gear);
+    } else if (versionBadge?.parentElement) {
       versionBadge.insertAdjacentElement('beforebegin', gear);
     } else {
       gear.classList.add('r5-settings-gear-fallback');
