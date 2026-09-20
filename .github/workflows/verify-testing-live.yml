@@ -213,8 +213,12 @@ jobs:
           await page.waitForSelector('.r5-cluster-disposal',{timeout:10000});
           assert((await page.locator('.r5-cluster-disposal').count())>0,'Disposal facilities are not clustering at low zoom');
 
-          await page.locator('.well-radius[data-km="10"]').click();
+          await page.locator('.mobile-nav button[data-scroll="wellsPanel"]').click();
+          await page.waitForSelector('#wellsPanel.mobile-open');
+          await page.locator('#wellsPanel .well-radius[data-km="10"]').click();
           await page.waitForFunction(()=>R5MapUI.status().wellCount>1,null,{timeout:60000});
+          await page.locator('.mobile-nav button[data-scroll="mapSection"]').click();
+          await page.waitForFunction(()=>!document.querySelector('.content>.section.mobile-open'));
           await page.evaluate(()=>map.setZoom(10));
           await page.waitForSelector('.r5-cluster-well',{timeout:15000});
           assert((await page.locator('.r5-cluster-well').count())>0,'Surface wells are not clustering when markers overlap');
