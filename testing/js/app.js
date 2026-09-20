@@ -32,6 +32,10 @@ function parseJobInput(raw){
   raw=String(raw||'').trim();
   let m=raw.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
   if(m)return{type:'gps',lat:+m[1],lng:+m[2]};
+  if(/^[1-6]\d{9}$/.test(raw)){
+    const pidParsed=globalThis.LSDConverterV2?.parsePid(raw);
+    if(pidParsed?.status==='ok')return{type:'ats',sourceType:'pid',lsd:pidParsed.lsd,sec:pidParsed.section,twp:pidParsed.township,rge:pidParsed.range,mer:pidParsed.meridian,normalized:pidParsed.normalized,pid:raw};
+  }
   const parsed=globalThis.LSDConverterV2?.parse(raw);
   if(parsed?.status==='ok'&&parsed.kind==='lsd'){
     return{type:'ats',lsd:parsed.lsd,sec:parsed.section,twp:parsed.township,rge:parsed.range,mer:parsed.meridian,normalized:parsed.normalized,pid:parsed.pid};
