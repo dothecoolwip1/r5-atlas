@@ -4,7 +4,9 @@ const APP_VERSION = scriptUrl.searchParams.get('v') || 'unknown';
 const CACHE_NAME = `r5-atlas-${APP_VERSION}-modular-shell`;
 const EXTERNAL_SHELL = [
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css',
+  'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js'
 ];
 const PRECACHE = [
   './',
@@ -16,6 +18,7 @@ const PRECACHE = [
   './js/core/providers.js',
   './js/features/saved-locations.js',
   './js/features/universal-search.js',
+  './js/features/field-ui.js',
   './js/lsd-converter.bundle.js',
   './data/facilities.js',
   './data/st37-meta.json',
