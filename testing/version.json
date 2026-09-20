@@ -1,17 +1,15 @@
 {
-  "version": "0.7.1",
+  "version": "0.8.0",
   "releasedAt": "2026-09-20",
-  "title": "Pack 1 offline launch verification",
+  "title": "Pack 2 device-first saved LSD library",
   "notes": [
-    "Cached the Leaflet 1.9.4 runtime and stylesheet in the PWA shell so the installed app can cold-launch after the network is disabled.",
-    "Split the testing app into a small HTML shell, external stylesheet, application runtime, data module, storage adapter, and provider adapter.",
-    "Combined the LSD converter runtime layers into one reusable converter bundle while preserving the authoritative offline Alberta ATS pack.",
-    "Removed duplicate legacy function declarations and the historical override stack from active runtime logic.",
-    "Removed the remote legacy 43 MB well-data HTML fallback. Well snapshot files now cache only when Wells needs them and can be reused offline after an online load.",
-    "Replaced native browser prompt and confirm dialogs with in-app field-friendly controls.",
-    "Removed placeholder settings rows and kept only settings that currently work.",
-    "Archived the standalone LandTracker reconstruction and removed obsolete recovery, diagnostic, scraping, and reverse-engineering workflows from the active project.",
-    "Added a React and TypeScript migration workspace plus typed converter, storage, and provider boundaries for later architecture packs.",
-    "Added a deployed Playwright regression gate that verifies the mobile app online and then reloads it offline and resolves a known LSD from the cached authoritative pack."
+    "Moved saved LSD records into an IndexedDB device database with one canonical record per legal land description.",
+    "Automatically migrates existing browser history and LSD notes into the new device database when it is first opened.",
+    "Keeps field notes, favourite status, selected disposal, selected surface well, UWI, licensee and saved coordinates together with each LSD.",
+    "Tracks first visit, latest visit, total visit count and recent visit history for each saved LSD.",
+    "Added Saved LSD search, favourites-only filtering, multiple sort modes and one-tap favourite stars.",
+    "Expanded field notes with auto-save status, character count, copy and clear actions.",
+    "Added optional nearby-saved-LSD alerts with selectable 0.5, 1, 2 or 5 km radius. Alerts are off by default and only use device location while R5 Atlas is open.",
+    "Cached the Pack 2 IndexedDB and saved-location runtime in the PWA shell so saved LSDs remain available after an offline reload."
   ]
 }
