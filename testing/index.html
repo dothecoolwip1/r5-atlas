@@ -9,19 +9,25 @@
 <link rel="preconnect" href="https://unpkg.com">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <link rel="stylesheet" href="styles/app.css">
-<meta name="r5-app-version" content="0.8.1"><meta name="theme-color" content="#16191f"><link rel="manifest" href="manifest.webmanifest">
+<meta name="r5-app-version" content="0.9.0"><meta name="theme-color" content="#16191f"><link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
 <header class="topbar">
   <div class="brand"><img class="brand-logo" src="assets/r5-atlas-logo.png" alt="R5 Atlas logo"><div class="brand-text"><div class="brand-title">R5 Atlas</div><div class="brand-sub">From Surface to Disposal.</div></div></div>
-  <div class="data-pill">Live well data • Offline backup • App v0.8.1</div>
+  <div class="data-pill">Live well data • Offline backup • App v0.9.0</div>
 </header>
 <div class="page">
   <section id="mapSection" class="map-shell">
     <div id="map"></div>
     <div class="map-search">
-      <div class="map-search-row"><input id="jobInput" aria-label="Job location" placeholder="Search LSD, quarter section or GPS"><button id="findJob" class="primary-btn">Find</button></div>
-      <div id="jobStatus" class="map-status">Enter a job location or tap the map.</div>
+      <div class="map-search-row universal-search-row"><input id="jobInput" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Universal field search" aria-autocomplete="list" aria-controls="universalSearchResults" placeholder="Search LSD, PID, GPS, well, company or disposal"><button id="clearUniversalSearch" class="search-clear hidden" type="button" aria-label="Clear search">×</button><button id="findJob" class="primary-btn">Find</button></div>
+      <div id="universalSearchResults" class="universal-results hidden" role="listbox" aria-label="Search suggestions"></div>
+      <div id="jobStatus" class="map-status">Search any field location, or tap the map.</div>
+      <div id="fieldStatusStrip" class="field-status-strip" aria-label="Connectivity and data status">
+        <span id="connectionStatus" class="field-status-chip">Checking network</span>
+        <span id="dataSourceStatus" class="field-status-chip">Data source</span>
+        <span id="gpsStatus" class="field-status-chip">GPS check</span>
+      </div>
     </div>
     <div id="facilityCategoryFilters" class="map-filter-dock-v20" aria-label="Disposal types">
       <button class="filter-chip" data-cat="red" aria-pressed="true"><span class="dot red"></span><span class="full-label">Oilfield waste</span><span class="short-label">Oilfield</span> <small>23</small></button>
@@ -87,7 +93,7 @@
 </div>
 
 <nav class="mobile-nav" aria-label="Page navigation">
-  <button data-scroll="mapSection"><span>⌖</span>Map</button><button data-scroll="jobSection"><span>▣</span>LSD</button><button data-scroll="wellsPanel"><span>●</span>Wells</button><button data-scroll="facilitiesSection"><span>◆</span>Disposals</button><button data-scroll="historySection"><span>≡</span>Saved</button>
+  <button data-scroll="mapSection" class="active"><span>⌖</span>Map<em id="navMapState" class="nav-state">Home</em></button><button data-scroll="jobSection"><span>▣</span>LSD<em id="navLsdState" class="nav-state hidden">1</em></button><button data-scroll="wellsPanel"><span>●</span>Wells<em id="navWellsState" class="nav-state hidden">0</em></button><button data-scroll="facilitiesSection"><span>◆</span>Disposals<em id="navDisposalsState" class="nav-state"></em></button><button data-scroll="historySection"><span>≡</span>Saved<em id="navSavedState" class="nav-state hidden">0</em></button>
 </nav>
 
 <div id="wellDetailBackdrop" class="well-detail-backdrop hidden" role="presentation"><section class="well-detail" role="dialog" aria-modal="true" aria-labelledby="wellDetailTitle"><div class="well-detail-head"><h2 id="wellDetailTitle">Well Details</h2><button id="wellDetailClose" class="well-detail-close" type="button" aria-label="Close">×</button></div><div id="wellDetailBody" class="well-detail-body"></div></section></div>
@@ -118,5 +124,6 @@
 <script src="js/core/providers.js"></script>
 <script src="js/app.js"></script>
 <script src="js/features/saved-locations.js"></script>
+<script src="js/features/universal-search.js"></script>
 <script src="app-update.js" defer></script>
 </body></html>
