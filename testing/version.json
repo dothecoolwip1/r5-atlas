@@ -1,7 +1,7 @@
 {
-  "version": "0.10.6",
+  "version": "0.10.7",
   "releasedAt": "2026-09-20",
-  "title": "Mobile search and disposal stacking correction",
+  "title": "Mobile Wells sheet and Android Back navigation",
   "notes": [
     "Rebuilt the phone layout after field review to restore a clean map-first interface.",
     "Fixed the Settings gear mounting in the wrong fallback position beside the logo and anchored it to the right side of the header.",
@@ -19,6 +19,10 @@
     "Field Mode now enlarges the compact phone search controls without returning to the oversized Pack 4 layout.",
     "Raised the mobile search stacking layer so universal-search suggestions always remain tappable above the disposal filter row.",
     "Locked the mobile visual order to search first and disposal filters underneath it with a clear vertical gap.",
-    "Universal-search suggestions now suppress disposal controls while open so filters cannot visually cover the search UI or intercept taps."
+    "Universal-search suggestions now suppress disposal controls while open so filters cannot visually cover the search UI or intercept taps.",
+    "Rebuilt the phone Surface Wells sheet with a compact 3 by 2 radius grid instead of six oversized full-width buttons.",
+    "Compressed the well filter controls and status area so actual surface-well results appear much sooner on screen.",
+    "Added in-app mobile sheet history so Android Back or back-swipe closes the open LSD, Wells, Disposals or Saved sheet before normal browser/app navigation.",
+    "Switching between mobile sheets replaces the current sheet state instead of stacking duplicate Back presses."
   ]
 }
