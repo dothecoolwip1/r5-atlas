@@ -85,7 +85,7 @@ jobs:
               'Saved LSD search':'id="savedSearch"',
               'Saved LSD sorting':'id="savedSort"',
               'nearby radius':'id="nearbyRadius"',
-              'Pack 4 version':'content="0.10.6"',
+              'Pack 4 version':'content="0.10.7"',
           }
           combined='\n'.join([html,pack2,device])
           for label,token in pack2_tokens.items():
@@ -134,6 +134,9 @@ jobs:
               'focus visible':'focus-visible',
               'reduced motion':'prefers-reduced-motion',
               'map marker accessibility':'keyboard:true',
+              'Android Back sheet history':'r5AtlasSheet',
+              'mobile sheet push state':'history.pushState',
+              'compact Wells radius grid':'grid-template-columns:repeat(3,minmax(0,1fr))',
           }
           combined4='\n'.join([html,app,pack4,css])
           for label,token in pack4_tokens.items():
