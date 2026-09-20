@@ -94,7 +94,7 @@ jobs:
           const settingsText=await page.locator('#r5-app-modal').innerText();
           assert(settingsText.includes('Offline LSD pack'),'Settings do not show offline LSD pack status');
           assert(!settingsText.includes('Coming soon'),'Placeholder settings are still visible');
-          await page.getByRole('button',{name:'Close'}).click();
+          await page.locator('#r5-app-modal').getByRole('button',{name:'Close',exact:true}).click();
 
           await page.evaluate(()=>{
             void confirmAction('Pack 1 confirmation test','Continue').then(v=>window.__pack1ConfirmResult=v);
