@@ -2,6 +2,10 @@
 const scriptUrl = new URL(self.location.href);
 const APP_VERSION = scriptUrl.searchParams.get('v') || 'unknown';
 const CACHE_NAME = `r5-atlas-${APP_VERSION}-modular-shell`;
+const EXTERNAL_SHELL = [
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+];
 const PRECACHE = [
   './',
   './index.html',
@@ -15,7 +19,8 @@ const PRECACHE = [
   './manifest.webmanifest',
   './data/alberta-ats-v41-lsd.bin.gz',
   './assets/r5-atlas-app-icon.png',
-  './assets/r5-atlas-logo.png'
+  './assets/r5-atlas-logo.png',
+  ...EXTERNAL_SHELL
 ];
 
 self.addEventListener('install', event => {
@@ -69,6 +74,10 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
+  if (EXTERNAL_SHELL.includes(url.href)) {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
   if (url.origin !== self.location.origin) return;
   if (url.pathname.endsWith('/version.json')) {
     event.respondWith(fetch(request, { cache: 'no-store' }));

@@ -1,0 +1,126 @@
+name: Verify Testing Live
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-testing-live.yml'
+      - 'testing/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.55.0 >/dev/null 2>&1
+          npx playwright install --with-deps chromium
+      - name: Verify deployed mobile PWA online and offline
+        shell: bash
+        run: |
+          cat > /tmp/verify.mjs <<'JS'
+          import { chromium } from 'playwright';
+
+          const base='https://dothecoolwip1.github.io/r5-atlas/testing/';
+          const expected='0.7.1';
+          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+          async function waitForDeployment(){
+            const deadline=Date.now()+180000;
+            let last='';
+            while(Date.now()<deadline){
+              try{
+                const r=await fetch(base+'version.json?t='+Date.now(),{cache:'no-store'});
+                if(r.ok){
+                  const j=await r.json();
+                  last=j.version||'';
+                  if(last===expected)return;
+                }
+              }catch{}
+              await sleep(5000);
+            }
+            throw new Error('Timed out waiting for deployed v'+expected+'. Last version: '+last);
+          }
+
+          function assert(condition,message){
+            if(!condition)throw new Error(message);
+          }
+
+          await waitForDeployment();
+
+          const browser=await chromium.launch({headless:true});
+          const context=await browser.newContext({viewport:{width:390,height:844}});
+          await context.addInitScript(({expected})=>{
+            localStorage.setItem('r5-atlas-auto-updates','no');
+            localStorage.setItem('r5-atlas-last-build',expected);
+          },{expected});
+          const page=await context.newPage();
+          const pageErrors=[];
+          page.on('pageerror',e=>pageErrors.push(String(e)));
+
+          await page.goto(base+'?pack1='+Date.now(),{waitUntil:'domcontentloaded',timeout:120000});
+          await page.waitForSelector('#jobInput',{state:'visible',timeout:30000});
+          await page.waitForFunction(v=>document.querySelector('meta[name="r5-app-version"]')?.content===v,expected);
+
+          assert((await page.locator('.data-pill').innerText()).includes('0.7.1'),'Visible version is not v0.7.1');
+          assert((await page.locator('.well-radius.active').innerText()).trim()==='0.5 km','Default well radius is not 0.5 km');
+          assert(await page.locator('.facility').count()>0,'Disposal directory did not render');
+
+          await page.locator('#jobInput').fill('06-32-048-07-W5');
+          await page.locator('#findJob').click();
+          await page.waitForFunction(()=>document.querySelector('#jobStatus')?.textContent?.includes('Job loaded:'),null,{timeout:45000});
+          const onlineDetails=await page.locator('#jobDetails').innerText();
+          assert(onlineDetails.includes('06-32-048-07 W5M'),'Online LSD lookup returned the wrong active LSD');
+
+          await page.locator('#jobNotes').fill('Pack 1 verification note');
+          await page.waitForTimeout(700);
+          const history=await page.evaluate(()=>JSON.parse(localStorage.getItem('albertaOilfieldFieldMapHistoryV15')||'[]'));
+          assert(history.some(x=>String(x.notes||'').includes('Pack 1 verification note')),'Saved LSD note did not persist');
+
+          await page.waitForSelector('#r5-settings-gear',{timeout:10000});
+          await page.locator('#r5-settings-gear').click();
+          await page.waitForSelector('#r5-app-modal');
+          const settingsText=await page.locator('#r5-app-modal').innerText();
+          assert(settingsText.includes('Offline LSD pack'),'Settings do not show offline LSD pack status');
+          assert(!settingsText.includes('Coming soon'),'Placeholder settings are still visible');
+          await page.getByRole('button',{name:'Close'}).click();
+
+          await page.evaluate(()=>{
+            void confirmAction('Pack 1 confirmation test','Continue').then(v=>window.__pack1ConfirmResult=v);
+          });
+          await page.waitForSelector('.r5-confirm-dialog');
+          assert((await page.locator('.r5-confirm-dialog').innerText()).includes('Pack 1 confirmation test'),'In-app confirmation dialog did not render');
+          await page.getByRole('button',{name:'Cancel'}).click();
+          await page.waitForFunction(()=>window.__pack1ConfirmResult===false);
+
+          await page.evaluate(()=>navigator.serviceWorker.ready.then(()=>true));
+          await page.waitForTimeout(2500);
+
+          assert(pageErrors.length===0,'Online page errors: '+pageErrors.join(' | '));
+
+          await context.setOffline(true);
+          await page.reload({waitUntil:'domcontentloaded',timeout:30000});
+          await page.waitForSelector('#jobInput',{state:'visible',timeout:20000});
+          const offlineVersion=await page.locator('meta[name="r5-app-version"]').getAttribute('content');
+          assert(offlineVersion===expected,'Offline reload did not serve v'+expected);
+
+          await page.locator('#jobInput').fill('06-32-048-07-W5');
+          await page.locator('#findJob').click();
+          await page.waitForFunction(()=>document.querySelector('#jobStatus')?.textContent?.includes('Job loaded:'),null,{timeout:30000});
+          const offlineDetails=await page.locator('#jobDetails').innerText();
+          assert(offlineDetails.includes('06-32-048-07 W5M'),'Offline LSD lookup failed or returned the wrong LSD');
+
+          await page.screenshot({path:'pack1-mobile-offline.png',fullPage:true});
+          await browser.close();
+          console.log('Pack 1 live browser verification passed: online UI, persistence, settings, custom dialogs, PWA offline reload, offline LSD lookup.');
+          JS
+          node /tmp/verify.mjs
