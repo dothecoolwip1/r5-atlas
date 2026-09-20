@@ -1,5 +1,5 @@
 {
-  "version": "0.9.2",
+  "version": "0.9.3",
   "releasedAt": "2026-09-20",
   "title": "Pack 3 universal field intelligence",
   "notes": [
@@ -12,6 +12,7 @@
     "Expanded permanent saved LSD records with tags, hazards, offline availability and record-schema metadata while preserving notes, visits, favourites, selected disposal and selected well.",
     "Cached the Pack 3 universal-search runtime and ST37 metadata in the PWA shell so status and saved-location search continue to work after an offline reload.",
     "Final integration build includes deterministic loaded-company suggestions, refined search activation behavior and the Pack 3 live regression gate.",
-    "Added company and UWI suggestions directly from saved LSD metadata so those searches remain deterministic and useful even when live AER well lookup is unavailable."
+    "Added company and UWI suggestions directly from saved LSD metadata so those searches remain deterministic and useful even when live AER well lookup is unavailable.",
+    "Universal search now reads canonical saved well and company metadata directly from IndexedDB and normalizes UWI formatting so persisted records stay searchable across live-state changes and offline reloads."
   ]
 }
