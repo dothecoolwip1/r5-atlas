@@ -126,7 +126,7 @@
 @media(max-width:560px){.h2s-tier-counts{grid-template-columns:1fr 1fr}.company-map-head{padding:9px 10px}.company-map-filters{padding:7px 8px;gap:5px}.company-type-filter{flex:1 1 calc(50% - 5px);justify-content:flex-start;padding:6px 8px;font-size:10px}.company-map-note{padding-bottom:max(9px,env(safe-area-inset-bottom))}}
 
 </style>
-<meta name="r5-app-version" content="0.5.5"><meta name="theme-color" content="#16191f"><link rel="manifest" href="manifest.webmanifest">
+<meta name="r5-app-version" content="0.5.6"><meta name="theme-color" content="#16191f"><link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
 <header class="topbar">
@@ -408,11 +408,81 @@ function selectDisposal(n){selectedDisposal=n;const f=facilities.find(x=>x.n===n
 function clearJob(){job=null;selectedDisposal=null;routes.clear();routeRequest++;if(jobMarker)map.removeLayer(jobMarker);if(jobPolygon)map.removeLayer(jobPolygon);jobMarker=jobPolygon=null;clearWellMarkers();document.getElementById('jobArea').classList.add('hidden');document.getElementById('wellsPanel').classList.add('hidden');document.getElementById('jobStatus').textContent='Enter a job location or tap the map.';document.getElementById('jobStatus').className='map-status';document.getElementById('selectedDisposal').classList.add('hidden');renderFacilities();}
 
 function st37Lines(text,fn){let s=0;while(s<text.length){let e=text.indexOf('\n',s);if(e<0)e=text.length;if(e>s)fn(text.slice(s,e));s=e+1}}
-let legacySt37HtmlPromise;
-async function gunzipBlock(id){if(!('DecompressionStream'in window))throw Error('Current Chrome/Edge/Android Chrome is required to unpack ST37.');if(!legacySt37HtmlPromise)legacySt37HtmlPromise=fetch('https://raw.githubusercontent.com/dothecoolwip1/r5-atlas/71cbae044eb2aacc853d8d4c42d4bfcdbca44961/testing/index.html').then(r=>{if(!r.ok)throw Error(`Could not load the ST37 data pack (${r.status}).`);return r.text()});const html=await legacySt37HtmlPromise;const match=html.match(new RegExp(`<script type="application/octet-stream" id="${id}">([\\s\\S]*?)<\\/script>`));if(!match)throw Error('The ST37 data pack is incomplete.');const bin=atob(match[1].trim()),bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));return new Response(stream).text()}
-async function ensureSt37(){if(st37Ready)return;if(st37Promise)return st37Promise;st37Promise=(async()=>{const s=document.getElementById('st37Status');s.textContent='Unpacking 539,475 surface holes...';let txt=await gunzipBlock('st37SurfaceEmbedded');st37Lines(txt,line=>{if(!line||line[0]==='#')return;const p=line.split('\x1f');if(p.length<8)return;const r=[+p[1],+p[2],p[3],p[4],p[5],p[6],p[7]];if(!Number.isFinite(r[0])||!Number.isFinite(r[1]))return;let b=surfaceGrid.get(p[0]);if(!b)surfaceGrid.set(p[0],b=[]);b.push(r)});txt=null;await new Promise(r=>requestAnimationFrame(r));s.textContent='Surface holes ready. Unpacking 537,514 bottom-hole records...';txt=await gunzipBlock('st37BoreEmbedded');st37Lines(txt,line=>{if(!line||line[0]==='#')return;const p=line.split('\x1f');if(p.length<12||!p[0])return;const r=[p[1],p[2],p[3],p[4]?+p[4]:null,p[5]?+p[5]:null,p[6]?+p[6]:null,p[7]?+p[7]:null,p[8],p[9],p[10],p[11]];let b=boresByLicence.get(p[0]);if(!b)boresByLicence.set(p[0],b=[]);b.push(r)});txt=null;st37Ready=true;s.textContent='AER ST37 ready • 539,475 surface holes • 537,514 bottom-hole records • August 2026';})();return st37Promise}
-function candidateSurfaces(){if(!job)return[];let minLat,maxLat,minLng,maxLng;if(wellMode.type==='lsd'&&job.geometry?.rings?.[0]){const ring=job.geometry.rings[0];minLat=Math.min(...ring.map(x=>x[1]));maxLat=Math.max(...ring.map(x=>x[1]));minLng=Math.min(...ring.map(x=>x[0]));maxLng=Math.max(...ring.map(x=>x[0]));}else{const km=wellMode.km||2,dlat=km/111.2,dlng=km/(111.2*Math.cos(job.lat*Math.PI/180));minLat=job.lat-dlat;maxLat=job.lat+dlat;minLng=job.lng-dlng;maxLng=job.lng+dlng}const out=[];for(let a=Math.floor(minLat*10);a<=Math.floor(maxLat*10);a++)for(let c=Math.floor(minLng*10);c<=Math.floor(maxLng*10);c++){const rows=surfaceGrid.get(`${a}:${c}`)||[];rows.forEach(r=>{if(r[0]<minLat||r[0]>maxLat||r[1]<minLng||r[1]>maxLng)return;if(wellMode.type==='lsd'){if(!pointInJobPolygon(r[0],r[1]))return}else if(haversineKm(job.lat,job.lng,r[0],r[1])>wellMode.km)return;out.push({lat:r[0],lng:r[1],licence:r[2],licensee:r[3],status:r[4],statusDate:r[5],category:r[6]})})}return out}
-function groupPads(surfaces){const m=new Map();surfaces.forEach(s=>{const key=`${s.lat.toFixed(6)}|${s.lng.toFixed(6)}`;let p=m.get(key);if(!p)m.set(key,p={key,lat:s.lat,lng:s.lng,surfaces:[],bores:[],distance:haversineKm(job.lat,job.lng,s.lat,s.lng),surfaceDls:pointInJobPolygon(s.lat,s.lng)?job.ats:''});p.surfaces.push(s);const bs=boresByLicence.get(s.licence)||[];if(bs.length)bs.forEach(b=>p.bores.push({licence:s.licence,licensee:s.licensee,status:s.status,statusDate:s.statusDate,uwi:b[0]||'',rawUwi:b[1]||'',name:b[2]||'',tmd:Number.isFinite(b[3])&&b[3]>0?b[3]:null,tvd:Number.isFinite(b[4])&&b[4]>0?b[4]:null,bhLat:Number.isFinite(b[5])?b[5]:null,bhLng:Number.isFinite(b[6])?b[6]:null,type:b[10]||s.category||''}));else p.bores.push({licence:s.licence,licensee:s.licensee,status:s.status,statusDate:s.statusDate,uwi:'',rawUwi:'',name:`AER Licence ${s.licence}`,tmd:null,tvd:null,bhLat:null,bhLng:null,type:s.category||''})});return[...m.values()].sort((a,b)=>a.distance-b.distance)}
+let legacySt37HtmlPromise,st37MetaPromise;
+async function fetchSt37Meta(){
+  if(st37MetaPromise)return st37MetaPromise;
+  st37MetaPromise=fetch(`data/st37-meta.json?t=${Date.now()}`,{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
+  return st37MetaPromise;
+}
+async function gunzipResponse(response){
+  if(!response?.ok)throw Error(`ST37 data file returned ${response?.status||'an error'}.`);
+  if(!response.body)throw Error('ST37 data response had no body.');
+  const stream=response.body.pipeThrough(new DecompressionStream('gzip'));
+  return new Response(stream).text();
+}
+async function gunzipBlock(id){
+  if(!('DecompressionStream'in window))throw Error('Current Chrome, Edge, or Android Chrome is required to unpack ST37.');
+  const local=id==='st37SurfaceEmbedded'?'data/st37-surface.txt.gz':id==='st37BoreEmbedded'?'data/st37-bore.txt.gz':null;
+  if(local){
+    try{
+      const response=await fetch(`${local}?t=${Date.now()}`,{cache:'no-store'});
+      if(response.ok)return await gunzipResponse(response);
+    }catch(e){console.warn('Current local ST37 fallback unavailable, using legacy snapshot',e)}
+  }
+  if(!legacySt37HtmlPromise)legacySt37HtmlPromise=fetch('https://raw.githubusercontent.com/dothecoolwip1/r5-atlas/71cbae044eb2aacc853d8d4c42d4bfcdbca44961/testing/index.html').then(r=>{if(!r.ok)throw Error(`Could not load the legacy ST37 data pack (${r.status}).`);return r.text()});
+  const html=await legacySt37HtmlPromise;
+  const match=html.match(new RegExp(`<script type="application/octet-stream" id="${id}">([\\s\\S]*?)<\\/script>`));
+  if(!match)throw Error('The ST37 fallback data pack is incomplete.');
+  const bin=atob(match[1].trim()),bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  return await gunzipResponse(new Response(new Blob([bytes])));
+}
+async function ensureSt37(){
+  if(st37Ready)return;
+  if(st37Promise)return st37Promise;
+  st37Promise=(async()=>{
+    const status=document.getElementById('st37Status');
+    const meta=await fetchSt37Meta();
+    const surfaceExpected=Number(meta?.surfaceRecords)||539475;
+    const boreExpected=Number(meta?.bottomHoleRecords)||537514;
+    status.textContent=`Unpacking ${surfaceExpected.toLocaleString()} surface holes...`;
+    let txt=await gunzipBlock('st37SurfaceEmbedded');
+    let surfaceLoaded=0;
+    st37Lines(txt,line=>{
+      if(!line||line[0]==='#')return;
+      const p=line.split('\x1f');
+      if(p.length<8)return;
+      const r=[+p[1],+p[2],p[3],p[4],p[5],p[6],p[7],p[8]||''];
+      if(!Number.isFinite(r[0])||!Number.isFinite(r[1]))return;
+      let b=surfaceGrid.get(p[0]);
+      if(!b)surfaceGrid.set(p[0],b=[]);
+      b.push(r);
+      surfaceLoaded++;
+    });
+    txt=null;
+    await new Promise(r=>requestAnimationFrame(r));
+    status.textContent=`Surface holes ready. Unpacking ${boreExpected.toLocaleString()} bottom-hole records...`;
+    txt=await gunzipBlock('st37BoreEmbedded');
+    let boreLoaded=0;
+    st37Lines(txt,line=>{
+      if(!line||line[0]==='#')return;
+      const p=line.split('\x1f');
+      if(p.length<12||!p[0])return;
+      const r=[p[1],p[2],p[3],p[4]?+p[4]:null,p[5]?+p[5]:null,p[6]?+p[6]:null,p[7]?+p[7]:null,p[8],p[9],p[10],p[11]];
+      let b=boresByLicence.get(p[0]);
+      if(!b)boresByLicence.set(p[0],b=[]);
+      b.push(r);
+      boreLoaded++;
+    });
+    txt=null;
+    st37Ready=true;
+    const generated=meta?.generatedAt?formatHistoryDate(meta.generatedAt):'legacy August 2026';
+    status.textContent=`AER ST37 fallback ready • ${surfaceLoaded.toLocaleString()} surface holes • ${boreLoaded.toLocaleString()} bottom holes • refreshed ${generated}`;
+  })();
+  return st37Promise;
+}
+function candidateSurfaces(){if(!job)return[];let minLat,maxLat,minLng,maxLng;if(wellMode.type==='lsd'&&job.geometry?.rings?.[0]){const ring=job.geometry.rings[0];minLat=Math.min(...ring.map(x=>x[1]));maxLat=Math.max(...ring.map(x=>x[1]));minLng=Math.min(...ring.map(x=>x[0]));maxLng=Math.max(...ring.map(x=>x[0]));}else{const km=wellMode.km||2,dlat=km/111.2,dlng=km/(111.2*Math.cos(job.lat*Math.PI/180));minLat=job.lat-dlat;maxLat=job.lat+dlat;minLng=job.lng-dlng;maxLng=job.lng+dlng}const out=[];for(let a=Math.floor(minLat*10);a<=Math.floor(maxLat*10);a++)for(let c=Math.floor(minLng*10);c<=Math.floor(maxLng*10);c++){const rows=surfaceGrid.get(`${a}:${c}`)||[];rows.forEach(r=>{if(r[0]<minLat||r[0]>maxLat||r[1]<minLng||r[1]>maxLng)return;if(wellMode.type==='lsd'){if(!pointInJobPolygon(r[0],r[1]))return}else if(haversineKm(job.lat,job.lng,r[0],r[1])>wellMode.km)return;out.push({lat:r[0],lng:r[1],licence:r[2],licensee:r[3],status:r[4],statusDate:r[5],category:r[6],surfaceDls:r[7]||''})})}return out}
+function groupPads(surfaces){const m=new Map();surfaces.forEach(s=>{const key=`${s.lat.toFixed(6)}|${s.lng.toFixed(6)}`;let p=m.get(key);if(!p)m.set(key,p={key,lat:s.lat,lng:s.lng,surfaces:[],bores:[],distance:haversineKm(job.lat,job.lng,s.lat,s.lng),surfaceDls:s.surfaceDls||((wellMode.type==='lsd'&&pointInJobPolygon(s.lat,s.lng))?job.ats:'')});p.surfaces.push(s);const bs=boresByLicence.get(s.licence)||[];if(bs.length)bs.forEach(b=>p.bores.push({licence:s.licence,licensee:s.licensee,status:s.status,statusDate:s.statusDate,uwi:b[0]||'',rawUwi:b[1]||'',name:b[2]||'',tmd:Number.isFinite(b[3])&&b[3]>0?b[3]:null,tvd:Number.isFinite(b[4])&&b[4]>0?b[4]:null,bhLat:Number.isFinite(b[5])?b[5]:null,bhLng:Number.isFinite(b[6])?b[6]:null,type:b[10]||s.category||''}));else p.bores.push({licence:s.licence,licensee:s.licensee,status:s.status,statusDate:s.statusDate,uwi:'',rawUwi:'',name:`AER Licence ${s.licence}`,tmd:null,tvd:null,bhLat:null,bhLng:null,type:s.category||''})});return[...m.values()].sort((a,b)=>a.distance-b.distance)}
 function clearWellMarkers(){wellMarkers.forEach(m=>map.removeLayer(m));wellMarkers=[];loadedPads=[]}
 async function loadWells(){if(!job)return;document.getElementById('wellStatus').textContent='Loading embedded ST37 well data...';try{await ensureSt37();const surfaces=candidateSurfaces();loadedPads=groupPads(surfaces);renderWells();}catch(e){document.getElementById('wellStatus').textContent=e.message;document.getElementById('wellStatus').className='status error'}}
 function renderWells(){clearWellMarkersOnly();const q=document.getElementById('wellSearch').value.toLowerCase().trim();const pads=loadedPads.filter(p=>!q||[...p.surfaces.map(s=>`${s.licence} ${s.licensee} ${s.status}`),...p.bores.map(b=>`${b.uwi} ${b.rawUwi} ${b.name} ${b.licence} ${b.licensee} ${b.status}`)].join(' ').toLowerCase().includes(q));document.getElementById('wellStatus').textContent=`${loadedPads.length} surface locations loaded. ${pads.length} shown.${wellMode.type==='radius'?` Search radius: ${wellMode.km} km.`:' Surface location is inside the active LSD.'}`;document.getElementById('wellStatus').className='status ok';if(wellsVisible)pads.forEach(p=>{const surf=displaySurfaceDls(p.surfaceDls)||'Surface DLS resolves on selection';const first=p.bores[0];const popupWell=first?`<br><br><b>Well</b><br>${esc(first.name||displayUwi(first))}<br><span class="mono">UWI: ${esc(displayUwi(first))}</span>${p.bores.length>1?`<br>+ ${p.bores.length-1} additional wellbore(s)`:''}`:'';const m=L.marker([p.lat,p.lng],{icon:makeWellIcon(p.bores.length)}).addTo(map).bindPopup(`<b>Surface Location</b><br>${esc(surf)}${popupWell}`);wellMarkers.push(m)});document.getElementById('wellGrid').innerHTML=pads.slice(0,100).map((p,i)=>wellCard(p,i)).join('')+(pads.length>100?'<div class="status">Showing the nearest 100 surface locations. Narrow the radius or use the well filter.</div>':'');bindWellActions(pads);}
