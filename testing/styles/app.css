@@ -659,21 +659,15 @@ body.field-mode .leaflet-control-zoom a{width:48px!important;height:48px!importa
     font-size:19px;
   }
   #wellsPanel .well-toolbar{
-    padding:10px 12px 9px;
+    padding:8px 10px 7px;
     background:#f8fafb;
     border-bottom:1px solid #dbe4e8;
   }
-  #wellsPanel .v21-control-label{
-    margin:0 0 6px;
-    font-size:9px;
-    letter-spacing:.12em;
-    font-weight:950;
-    color:#6d7f89;
-  }
+  #wellsPanel .v21-control-label{display:none}
   #wellsPanel .v21-radius-row{
     display:grid;
     grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:6px;
+    gap:5px;
     margin:0;
   }
   #wellsPanel .v21-radius-row .well-radius{
@@ -743,17 +737,19 @@ body.field-mode .leaflet-control-zoom a{width:48px!important;height:48px!importa
     font-size:9px;
   }
   #wellsPanel #wellStatus{
-    margin-top:6px;
-    padding:6px 8px;
+    display:none;
+    margin-top:5px;
+    padding:5px 7px;
     min-height:0;
     border:0;
-    border-radius:9px;
+    border-radius:8px;
     background:#edf7f1;
     color:#2e6b50;
     font-size:9px;
     line-height:1.2;
   }
   #wellsPanel #wellStatus.error{
+    display:block;
     background:#fff1f1;
     color:#8e3b3b;
   }
@@ -761,7 +757,7 @@ body.field-mode .leaflet-control-zoom a{width:48px!important;height:48px!importa
     display:grid;
     grid-template-columns:1fr;
     gap:8px;
-    padding:8px 10px 12px;
+    padding:6px 10px 12px;
     background:#f5f8fa;
   }
   #wellsPanel .well-card{
