@@ -1,5 +1,5 @@
 {
-  "version": "0.8.0",
+  "version": "0.8.1",
   "releasedAt": "2026-09-20",
   "title": "Pack 2 device-first saved LSD library",
   "notes": [
@@ -10,6 +10,7 @@
     "Added Saved LSD search, favourites-only filtering, multiple sort modes and one-tap favourite stars.",
     "Expanded field notes with auto-save status, character count, copy and clear actions.",
     "Added optional nearby-saved-LSD alerts with selectable 0.5, 1, 2 or 5 km radius. Alerts are off by default and only use device location while R5 Atlas is open.",
-    "Cached the Pack 2 IndexedDB and saved-location runtime in the PWA shell so saved LSDs remain available after an offline reload."
+    "Cached the Pack 2 IndexedDB and saved-location runtime in the PWA shell so saved LSDs remain available after an offline reload.",
+    "Final integration build includes the Pack 2 settings syntax fix and startup readiness gate verified by the architecture checks."
   ]
 }
