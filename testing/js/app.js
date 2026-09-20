@@ -539,19 +539,27 @@ function renderWells(){
   bindWellActions(pads);
   if(loadedPads.length&&!selectedSurfacePad){
     const item=currentHistoryId?history.find(x=>x.id===currentHistoryId):null;
+    const stored=item?.selectedWell||null;
+    const targetUwi=String(stored?.uwi||item?.uwi||'').trim();
+    const targetLicence=String(stored?.licence||'').trim();
     let match=null,boreIndex=0;
-    if(item?.uwi){
-      const target=String(item.uwi).trim();
+    if(targetUwi||targetLicence){
       for(const p of loadedPads){
-        const i=(p.bores||[]).findIndex(b=>displayUwi(b)===target);
+        const i=(p.bores||[]).findIndex(b=>
+          (targetUwi&&displayUwi(b)===targetUwi)||
+          (targetLicence&&String(b.licence||'').trim()===targetLicence)
+        );
         if(i>=0){match=p;boreIndex=i;break}
       }
+    }else if(item?.surfaceDls){
+      match=loadedPads.find(p=>displaySurfaceDls(p.surfaceDls)===displaySurfaceDls(item.surfaceDls))||null;
     }
-    if(!match&&item?.surfaceDls)match=loadedPads.find(p=>displaySurfaceDls(p.surfaceDls)===displaySurfaceDls(item.surfaceDls))||null;
-    selectedSurfacePad=match||loadedPads[0];
-    selectedSurfaceBore=match?boreIndex:0;
+    if(match){
+      selectedSurfacePad=match;
+      selectedSurfaceBore=boreIndex;
+    }
   }
-  updateHistorySurfaceInfo(selectedSurfacePad||loadedPads[0]);
+  if(selectedSurfacePad)updateHistorySurfaceInfo(selectedSurfacePad);
   updateMapJobBar();
 }
 function bindWellActions(pads){document.querySelectorAll('[data-well-detail]').forEach(b=>b.onclick=()=>openWellDetail(pads[+b.dataset.wellDetail],0));document.querySelectorAll('[data-well-focus]').forEach(b=>b.onclick=()=>{const p=pads[+b.dataset.wellFocus];selectSurfacePad(p);map.setView([p.lat,p.lng],15);closeMobileSheets()});document.querySelectorAll('[data-licensee]').forEach(b=>b.onclick=()=>openCompanyProfile(b.dataset.licensee))}
