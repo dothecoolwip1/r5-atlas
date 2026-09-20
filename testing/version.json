@@ -1,5 +1,5 @@
 {
-  "version": "0.10.0",
+  "version": "0.10.1",
   "releasedAt": "2026-09-20",
   "title": "Pack 4 field map and responsive workspace",
   "notes": [
@@ -11,6 +11,7 @@
     "Added a tablet landscape split layout with the live map beside scrollable job, well, disposal and saved-location details.",
     "Added a desktop three-panel workspace with Search and Saved on the left, the map in the centre and active location details on the right.",
     "Added reduced-motion support and preserved the existing mobile bottom navigation and sheet interactions.",
-    "Preserved Pack 1 through Pack 3 lookup, offline, IndexedDB, saved-location and universal-search behavior."
+    "Preserved Pack 1 through Pack 3 lookup, offline, IndexedDB, saved-location and universal-search behavior.",
+    "Kept the Field Mode toggle at the same 44 px minimum touch-target standard on phones instead of allowing the top-bar control to shrink."
   ]
 }
