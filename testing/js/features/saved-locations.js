@@ -72,6 +72,10 @@
       notes:String(raw.notes||''),
       notesUpdatedAt:raw.notesUpdatedAt||raw.updatedAt||'',
       favorite:!!raw.favorite,
+      tags:Array.isArray(raw.tags)?raw.tags.slice(0,30):[],
+      hazards:Array.isArray(raw.hazards)?raw.hazards.slice(0,30):[],
+      offlineAvailable:raw.offlineAvailable!==false,
+      locationRecordVersion:1,
       selectedDisposal:raw.selectedDisposal==null?null:raw.selectedDisposal,
       selectedWell:selectedWell?Object.assign({},selectedWell):null,
       surfaceDls:selectedWell&&selectedWell.surfaceDls||raw.surfaceDls||'',
@@ -209,8 +213,14 @@
         licensee:b.licensee||selectedSurfacePad.surfaces&&selectedSurfacePad.surfaces[0]&&selectedSurfacePad.surfaces[0].licensee||'',
         lat:Number.isFinite(+selectedSurfacePad.lat)?+selectedSurfacePad.lat:null,
         lng:Number.isFinite(+selectedSurfacePad.lng)?+selectedSurfacePad.lng:null,
-        boreIndex:selectedSurfaceBore
+        boreIndex:selectedSurfaceBore,
+        status:b.status||'',
+        type:b.type||'',
+        h2s:b.h2s??null,
+        isSour:b.isSour||''
       };
+      const sourText=[item.selectedWell.type,item.selectedWell.isSour].filter(Boolean).join(' ');
+      if((/H2S|H₂S|SOUR/i.test(sourText)||Number(item.selectedWell.h2s)>0)&&!item.hazards.includes('H2S / sour gas'))item.hazards.push('H2S / sour gas');
       item.surfaceDls=item.selectedWell.surfaceDls;
       item.uwi=item.selectedWell.uwi;
       item.licensee=item.selectedWell.licensee;
@@ -259,8 +269,14 @@
         licensee:b.licensee||p.surfaces&&p.surfaces[0]&&p.surfaces[0].licensee||'',
         lat:Number.isFinite(+p.lat)?+p.lat:null,
         lng:Number.isFinite(+p.lng)?+p.lng:null,
-        boreIndex:selectedSurfaceBore
+        boreIndex:selectedSurfaceBore,
+        status:b.status||'',
+        type:b.type||'',
+        h2s:b.h2s??null,
+        isSour:b.isSour||''
       };
+      const sourText=[item.selectedWell.type,item.selectedWell.isSour].filter(Boolean).join(' ');
+      if((/H2S|H₂S|SOUR/i.test(sourText)||Number(item.selectedWell.h2s)>0)&&!item.hazards.includes('H2S / sour gas'))item.hazards.push('H2S / sour gas');
       item.surfaceDls=item.selectedWell.surfaceDls;
       item.uwi=item.selectedWell.uwi;
       item.licensee=item.selectedWell.licensee;
