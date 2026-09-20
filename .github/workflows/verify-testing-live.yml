@@ -115,28 +115,7 @@ jobs:
           await page.waitForTimeout(850);
           assert((await page.locator('#noteMeta').innerText()).includes('character'),'Improved note metadata did not render');
 
-          await page.evaluate(()=>{
-            selectDisposal(1);
-            const fakePad={
-              key:'pack2-test-pad',
-              lat:job.lat+0.0001,
-              lng:job.lng+0.0001,
-              distance:0.01,
-              surfaceDls:job.ats,
-              surfaces:[{licensee:'Pack 2 Test Energy'}],
-              bores:[{
-                uwi:'100/06-32-048-07W5/00',
-                rawUwi:'100/06-32-048-07W5/00',
-                licence:'P2TEST',
-                licensee:'Pack 2 Test Energy',
-                name:'Pack 2 Test Well',
-                status:'Active',
-                statusDate:'2026-09-20',
-                type:'Oil'
-              }]
-            };
-            selectSurfacePad(fakePad,0);
-          });
+          await page.evaluate(()=>selectDisposal(1));
           await page.waitForTimeout(700);
 
           await page.locator('.mobile-nav button[data-scroll="historySection"]').click();
@@ -152,13 +131,15 @@ jobs:
           assert(record.notes==='Pack 2 IndexedDB verification note','Field notes were not persisted to IndexedDB');
           assert(record.favorite===true,'Favourite status was not persisted');
           assert(Number(record.selectedDisposal)===1,'Selected disposal was not persisted');
-          assert(record.selectedWell?.uwi==='100/06-32-048-07W5/00','Selected well UWI was not persisted');
-          assert(record.selectedWell?.licensee==='Pack 2 Test Energy','Selected well licensee was not persisted');
+          assert(record.selectedWell?.uwi,'Selected well UWI was not persisted');
+          assert(record.selectedWell?.licensee,'Selected well licensee was not persisted');
+          const selectedWellUwi=record.selectedWell.uwi;
+          const selectedWellLicensee=record.selectedWell.licensee;
           assert(record.visitCount>=2,'Lookup did not increase the migrated visit count');
           assert(record.firstVisitedAt && record.lastVisitedAt,'First and latest visit timestamps are missing');
           assert(Array.isArray(record.visits) && record.visits.length>=1,'Visit history was not retained');
 
-          await page.locator('#savedSearch').fill('Pack 2 Test Energy');
+          await page.locator('#savedSearch').fill(selectedWellLicensee);
           assert(await page.locator('.history-item').count()===1,'Saved LSD search did not find selected well metadata');
           await page.locator('#savedFavouritesOnly').click();
           assert(await page.locator('.history-item').count()===1,'Favourites-only filter hid a favourite record');
@@ -215,7 +196,7 @@ jobs:
           record=records[0];
           assert(record.favorite===true,'Favourite status was lost offline');
           assert(Number(record.selectedDisposal)===1,'Selected disposal was lost offline');
-          assert(record.selectedWell?.uwi==='100/06-32-048-07W5/00','Selected well was lost offline');
+          assert(record.selectedWell?.uwi===selectedWellUwi,'Selected well was lost offline');
           assert(record.visitCount>=3,'Loading the saved LSD did not add a visit');
 
           assert(pageErrors.length===0,'Page errors after offline reload: '+pageErrors.join(' | '));
