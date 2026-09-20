@@ -82,7 +82,7 @@ jobs:
               'Saved LSD search':'id="savedSearch"',
               'Saved LSD sorting':'id="savedSort"',
               'nearby radius':'id="nearbyRadius"',
-              'Pack 3 version':'content="0.9.2"',
+              'Pack 3 version':'content="0.9.3"',
           }
           combined='\n'.join([html,pack2,device])
           for label,token in pack2_tokens.items():
@@ -98,6 +98,8 @@ jobs:
               'PID recognition':'parsePid',
               'online AER universal search':'searchAerOnline',
               'offline ST37 universal search':'searchSt37Offline',
+              'canonical IndexedDB saved entity search':'savedDeviceEntitySuggestions',
+              'UWI normalization':'compactSearchToken',
               'recent searches':'r5-atlas-universal-search-recent-v1',
               'favourite suggestions':'favorite',
               'field navigation state':'navWellsState',
