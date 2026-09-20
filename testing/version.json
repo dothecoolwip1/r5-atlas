@@ -1,5 +1,5 @@
 {
-  "version": "0.9.0",
+  "version": "0.9.1",
   "releasedAt": "2026-09-20",
   "title": "Pack 3 universal field intelligence",
   "notes": [
@@ -10,6 +10,7 @@
     "Added a compact field status strip showing online/offline state, live AER or dated ST37 fallback status, and GPS permission readiness without requesting location until a location feature is used.",
     "Finalized Map, LSD, Wells, Disposals and Saved navigation with live state/count badges while keeping the map as the home state.",
     "Expanded permanent saved LSD records with tags, hazards, offline availability and record-schema metadata while preserving notes, visits, favourites, selected disposal and selected well.",
-    "Cached the Pack 3 universal-search runtime and ST37 metadata in the PWA shell so status and saved-location search continue to work after an offline reload."
+    "Cached the Pack 3 universal-search runtime and ST37 metadata in the PWA shell so status and saved-location search continue to work after an offline reload.",
+    "Final integration build includes deterministic loaded-company suggestions, refined search activation behavior and the Pack 3 live regression gate."
   ]
 }
