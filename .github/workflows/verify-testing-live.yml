@@ -36,6 +36,8 @@ jobs:
           const canonical='06-32-048-07 W5M';
           const legacyKey='albertaOilfieldFieldMapHistoryV15';
           const legacyNotesKey='albertaOilfieldFieldMapNotesV17';
+          const savedCompany='Pack 3 Test Energy';
+          const savedUwi='00/06-32-048-07W5/0';
           const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
           async function waitForDeployment(){
@@ -78,12 +80,18 @@ jobs:
               lastSearched:now,
               searchCount:1,
               favorite:true,
-              selectedDisposal:null
+              selectedDisposal:null,
+              surfaceDls:'06-32-048-07W5',
+              licensee:savedCompany,
+              uwi:savedUwi,
+              licence:'P3TEST',
+              wellLat:53.18331,
+              wellLng:-114.991884
             }]));
             localStorage.setItem(legacyNotesKey,JSON.stringify({
               [canonical.replace(/\s+/g,'').toUpperCase()]:'Legacy Pack 3 favourite note'
             }));
-          },{expected,legacyKey,legacyNotesKey,canonical});
+          },{expected,legacyKey,legacyNotesKey,canonical,savedCompany,savedUwi});
 
           const page=await context.newPage();
           const pageErrors=[];
@@ -127,22 +135,15 @@ jobs:
           assert(record.locationRecordVersion===1,'Permanent LSD record schema version is missing');
           assert(record.visitCount>=2,'PID lookup did not add a visit');
 
-          const loaded=await page.evaluate(()=>({
-            company:loadedPads?.[0]?.bores?.[0]?.licensee||'',
-            uwi:loadedPads?.[0]?.bores?.[0] ? displayUwi(loadedPads[0].bores[0]) : ''
-          }));
-          assert(loaded.company,'Known LSD did not load a company for universal company search');
-          assert(loaded.uwi,'Known LSD did not load a UWI for universal well search');
-
-          await page.locator('#jobInput').fill(loaded.company);
-          await page.waitForTimeout(450);
+          await page.locator('#jobInput').fill(savedCompany);
+          await page.waitForTimeout(350);
           const companyResults=await page.locator('#universalSearchResults').innerText();
-          assert(companyResults.includes('Company'),'Loaded company/operator was not recognized by universal search');
+          assert(companyResults.includes('Company'),'Saved company/operator was not recognized by universal search');
 
-          await page.locator('#jobInput').fill(loaded.uwi);
-          await page.waitForTimeout(450);
+          await page.locator('#jobInput').fill(savedUwi);
+          await page.waitForTimeout(350);
           const wellResults=await page.locator('#universalSearchResults').innerText();
-          assert(wellResults.includes('Well'),'Loaded UWI was not recognized by universal search');
+          assert(wellResults.includes('Well'),'Saved UWI was not recognized by universal search');
 
           const facilityName=await page.evaluate(()=>facilities[0].name);
           await page.locator('#jobInput').fill(facilityName);
@@ -210,6 +211,14 @@ jobs:
           await page.locator('#findJob').click();
           await page.waitForFunction(()=>document.querySelector('#jobStatus')?.textContent?.includes('Job loaded:'),null,{timeout:45000});
           assert((await page.locator('#jobDetails').innerText()).includes(canonical),'Offline PID lookup did not resolve the expected LSD');
+
+          await page.locator('#jobInput').fill(savedCompany);
+          await page.waitForTimeout(300);
+          assert((await page.locator('#universalSearchResults').innerText()).includes('Company'),'Offline saved-company search failed');
+
+          await page.locator('#jobInput').fill(savedUwi);
+          await page.waitForTimeout(300);
+          assert((await page.locator('#universalSearchResults').innerText()).includes('Well'),'Offline saved-UWI search failed');
 
           await page.locator('#jobInput').fill(facilityName);
           await page.waitForTimeout(350);
