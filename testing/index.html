@@ -126,7 +126,7 @@
 @media(max-width:560px){.h2s-tier-counts{grid-template-columns:1fr 1fr}.company-map-head{padding:9px 10px}.company-map-filters{padding:7px 8px;gap:5px}.company-type-filter{flex:1 1 calc(50% - 5px);justify-content:flex-start;padding:6px 8px;font-size:10px}.company-map-note{padding-bottom:max(9px,env(safe-area-inset-bottom))}}
 
 </style>
-<meta name="r5-app-version" content="0.5.4"><meta name="theme-color" content="#16191f"><link rel="manifest" href="manifest.webmanifest">
+<meta name="r5-app-version" content="0.5.5"><meta name="theme-color" content="#16191f"><link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
 <header class="topbar">
@@ -168,7 +168,7 @@
     </section>
 
     <section id="wellsPanel" class="section panel hidden"><div class="mobile-sheet-head"><b>Surface Wells</b><button type="button" data-sheet-close aria-label="Close">×</button></div>
-      <div class="well-panel-head"><div class="card-title-row"><div><h3 style="margin:0">AER Surface Wells</h3><div class="smallnote">Pins use ST37 Surface Hole GPS. Wellbores attach by AER licence.</div></div><div id="st37Status" class="smallnote">Embedded snapshot ready.</div></div></div>
+      <div class="well-panel-head"><div class="card-title-row"><div><h3 style="margin:0">AER Surface Wells</h3><div class="smallnote">Online uses live AER OneStop well licences. Offline falls back to the saved ST37 snapshot.</div></div><div id="st37Status" class="smallnote">Live AER when online • ST37 fallback</div></div></div>
       <div class="well-toolbar">
         <div class="toolbar-row"><button class="chip well-radius active" data-mode="lsd">This LSD</button><button class="chip well-radius" data-km="1">1 km</button><button class="chip well-radius" data-km="2">2 km</button><button class="chip well-radius" data-km="5">5 km</button><button class="chip well-radius" data-km="10">10 km</button><button id="hideWells" class="mini-btn">Hide Wells</button></div>
         <div class="toolbar-row well-search-wrap"><input id="wellSearch" class="search-input" placeholder="Search UWI, licence, well, licensee or status"><button id="clearWellSearch" class="mini-btn">Clear</button></div>
@@ -564,11 +564,124 @@ function restoreNoteForJob(){if(!job)return;const saved=notesStore[jobNoteKey()]
 function queueNoteSave(){setNoteSaveState('Saving...','');clearTimeout(noteSaveTimer);noteSaveTimer=setTimeout(()=>{persistNoteNow();saveJobHistory(true)},220)}
 function compactGeometry(g){if(!g?.rings?.[0])return null;return{rings:[g.rings[0].map(([x,y])=>[+x.toFixed(6),+y.toFixed(6)])]}}
 function saveHistoryStorage(){try{localStorage.setItem(HISTORY_KEY,JSON.stringify(history.slice(0,40)));return true}catch(e){showToast('History storage is full. Notes are still saved separately.');return false}}
-function loadHistory(){try{history=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]')||[]}catch{history=[]}history=history.slice(0,40).map(h=>({...h,geometry:compactGeometry(h.geometry)}));for(const h of history){if(h.notes&&h.ats){const k=String(h.ats).replace(/\s+/g,'').toUpperCase();if(notesStore[k]==null)notesStore[k]=h.notes}}try{localStorage.setItem(NOTES_KEY,JSON.stringify(notesStore))}catch{}saveHistoryStorage();renderHistory()}
-function saveJobHistory(updateOnly=false){if(!job)return;const notes=persistNoteNow()??'';let item=currentHistoryId?history.find(x=>x.id===currentHistoryId):null;if(!item){item={id:Date.now(),created:new Date().toISOString()};history.unshift(item);currentHistoryId=item.id}Object.assign(item,{ats:job.ats,lat:job.lat,lng:job.lng,geometry:compactGeometry(job.geometry),notes,selectedDisposal});if(selectedSurfacePad){const b=selectedSurfacePad.bores?.[selectedSurfaceBore]||selectedSurfacePad.bores?.[0];item.surfaceDls=displaySurfaceDls(selectedSurfacePad.surfaceDls)||job.ats;item.licensee=b?.licensee||selectedSurfacePad.surfaces?.[0]?.licensee||'';item.uwi=b?displayUwi(b):''}saveHistoryStorage();renderHistory()}
-function updateHistorySurfaceInfo(p=loadedPads[0]){if(!p||!job)return;selectedSurfacePad=selectedSurfacePad||p;const b=p.bores?.[0];const item=currentHistoryId?history.find(x=>x.id===currentHistoryId):null;if(item){item.surfaceDls=displaySurfaceDls(p.surfaceDls)||job.ats;item.licensee=b?.licensee||p.surfaces?.[0]?.licensee||'';item.uwi=b?displayUwi(b):'';item.surfaceCount=loadedPads.length;saveHistoryStorage();renderHistory()}updateMapJobBar()}
-function renderHistory(){const el=document.getElementById('historyList');el.innerHTML=history.map(h=>{const main=`${h.surfaceDls||h.ats}${h.licensee?` - ${h.licensee}`:''}`;return `<div class="history-item"><div><b>${esc(main)}</b><div class="sub">Job: ${esc(h.ats||'')}</div>${h.uwi?`<div class="sub mono">${esc(h.uwi)}</div>`:''}${h.notes?`<div class="sub">${esc(h.notes.slice(0,160))}</div>`:''}</div><div class="actions"><button data-load-history="${h.id}">Load</button><button data-del-history="${h.id}">Delete</button></div></div>`}).join('')||'<div class="status">No saved jobs yet.</div>';document.querySelectorAll('[data-load-history]').forEach(b=>b.onclick=()=>loadHistoryItem(+b.dataset.loadHistory));document.querySelectorAll('[data-del-history]').forEach(b=>b.onclick=()=>{history=history.filter(x=>x.id!=b.dataset.delHistory);saveHistoryStorage();renderHistory()})}
-async function loadHistoryItem(id){const h=history.find(x=>x.id===id);if(!h)return;currentHistoryId=id;document.getElementById('jobNotes').value=h.notes||notesStore[String(h.ats||'').replace(/\s+/g,'').toUpperCase()]||'';try{let r;if(h.geometry)r={ats:h.ats,lat:+h.lat,lng:+h.lng,geometry:h.geometry};else r=await performJobLookup(parseJobInput(h.ats));await setJob(r,{save:false});if(h.selectedDisposal)selectDisposal(+h.selectedDisposal)}catch(e){showToast(`Could not reload job: ${e.message}`)}}
+function historyAtsKey(v){return String(v||'').replace(/\\s+/g,'').toUpperCase()}
+function historyTime(v){const t=Date.parse(v||'');return Number.isFinite(t)?t:0}
+function formatHistoryDate(v){const t=historyTime(v);if(!t)return'Unknown';try{return new Date(t).toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}catch{return String(v||'Unknown')}}
+function mergeHistoryByLsd(records){
+  const merged=new Map();
+  for(const raw of records||[]){
+    if(!raw)continue;
+    const h={...raw,geometry:compactGeometry(raw.geometry)};
+    const key=historyAtsKey(h.ats)||`ID:${h.id||Math.random()}`;
+    const first=h.firstSearched||h.created||h.lastSearched||new Date().toISOString();
+    const last=h.lastSearched||h.created||first;
+    h.firstSearched=first;h.lastSearched=last;h.created=h.created||first;h.searchCount=Math.max(1,Number(h.searchCount)||1);
+    const x=merged.get(key);
+    if(!x){merged.set(key,h);continue}
+    if(historyTime(h.firstSearched)<historyTime(x.firstSearched))x.firstSearched=h.firstSearched;
+    if(historyTime(h.lastSearched)>historyTime(x.lastSearched)){
+      const keepFirst=x.firstSearched,keepCount=x.searchCount;
+      Object.assign(x,h);
+      x.firstSearched=keepFirst;
+      x.searchCount=keepCount;
+    }
+    x.searchCount=(Number(x.searchCount)||0)+(Number(h.searchCount)||1);
+    for(const field of ['notes','selectedDisposal','surfaceDls','licensee','uwi','surfaceCount','geometry','lat','lng'])if((x[field]==null||x[field]==='')&&h[field]!=null&&h[field]!=='')x[field]=h[field];
+  }
+  return[...merged.values()].sort((a,b)=>historyTime(b.lastSearched)-historyTime(a.lastSearched));
+}
+function loadHistory(){
+  try{history=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]')||[]}catch{history=[]}
+  history=mergeHistoryByLsd(history);
+  for(const h of history){
+    if(h.notes&&h.ats){
+      const k=historyAtsKey(h.ats);
+      if(notesStore[k]==null)notesStore[k]=h.notes;
+    }
+  }
+  try{localStorage.setItem(NOTES_KEY,JSON.stringify(notesStore))}catch{}
+  saveHistoryStorage();
+  renderHistory();
+}
+function saveJobHistory(updateOnly=false){
+  if(!job)return;
+  const notes=persistNoteNow()??'';
+  const key=historyAtsKey(job.ats);
+  let item=currentHistoryId?history.find(x=>x.id===currentHistoryId):null;
+  if(!item&&key)item=history.find(x=>historyAtsKey(x.ats)===key)||null;
+  const now=new Date().toISOString();
+  if(!item){
+    item={id:Date.now(),created:now,firstSearched:now,lastSearched:now,searchCount:updateOnly?0:1};
+    history.unshift(item);
+  }else if(!updateOnly){
+    item.firstSearched=item.firstSearched||item.created||now;
+    item.lastSearched=now;
+    item.searchCount=Math.max(0,Number(item.searchCount)||0)+1;
+    history=[item,...history.filter(x=>x!==item)];
+  }
+  currentHistoryId=item.id;
+  const rememberedDisposal=selectedDisposal??item.selectedDisposal??null;
+  Object.assign(item,{ats:job.ats,lat:job.lat,lng:job.lng,geometry:compactGeometry(job.geometry)||item.geometry||null,notes,selectedDisposal:rememberedDisposal});
+  if(!item.firstSearched)item.firstSearched=item.created||now;
+  if(!item.lastSearched)item.lastSearched=item.created||now;
+  if(!Number.isFinite(+item.searchCount)||+item.searchCount<1)item.searchCount=1;
+  if(selectedSurfacePad){
+    const b=selectedSurfacePad.bores?.[selectedSurfaceBore]||selectedSurfacePad.bores?.[0];
+    item.surfaceDls=displaySurfaceDls(selectedSurfacePad.surfaceDls)||job.ats;
+    item.licensee=b?.licensee||selectedSurfacePad.surfaces?.[0]?.licensee||item.licensee||'';
+    item.uwi=b?displayUwi(b):(item.uwi||'');
+  }
+  saveHistoryStorage();
+  renderHistory();
+  return item;
+}
+function updateHistorySurfaceInfo(p=loadedPads[0]){
+  if(!p||!job)return;
+  selectedSurfacePad=selectedSurfacePad||p;
+  const b=p.bores?.[selectedSurfaceBore]||p.bores?.[0];
+  const item=currentHistoryId?history.find(x=>x.id===currentHistoryId):history.find(x=>historyAtsKey(x.ats)===historyAtsKey(job.ats));
+  if(item){
+    item.surfaceDls=displaySurfaceDls(p.surfaceDls)||job.ats;
+    item.licensee=b?.licensee||p.surfaces?.[0]?.licensee||item.licensee||'';
+    item.uwi=b?displayUwi(b):(item.uwi||'');
+    item.surfaceCount=loadedPads.length;
+    saveHistoryStorage();
+    renderHistory();
+  }
+  updateMapJobBar();
+}
+function renderHistory(){
+  const el=document.getElementById('historyList');
+  el.innerHTML=history.map(h=>{
+    const main=`${h.surfaceDls||h.ats}${h.licensee?` - ${h.licensee}`:''}`;
+    const count=Math.max(1,Number(h.searchCount)||1);
+    const first=formatHistoryDate(h.firstSearched||h.created);
+    const last=formatHistoryDate(h.lastSearched||h.created);
+    const searched=count>1?`First searched: ${first} • Last searched: ${last} • ${count} searches`:`Searched: ${last}`;
+    return `<div class="history-item"><div><b>${esc(main)}</b><div class="sub">Job: ${esc(h.ats||'')}</div><div class="sub">${esc(searched)}</div>${h.uwi?`<div class="sub mono">${esc(h.uwi)}</div>`:''}${h.notes?`<div class="sub">${esc(h.notes.slice(0,160))}</div>`:''}</div><div class="actions"><button data-load-history="${h.id}">Load</button><button data-del-history="${h.id}">Delete</button></div></div>`;
+  }).join('')||'<div class="status">No saved jobs yet.</div>';
+  document.querySelectorAll('[data-load-history]').forEach(b=>b.onclick=()=>loadHistoryItem(+b.dataset.loadHistory));
+  document.querySelectorAll('[data-del-history]').forEach(b=>b.onclick=()=>{
+    history=history.filter(x=>x.id!=b.dataset.delHistory);
+    saveHistoryStorage();
+    renderHistory();
+  });
+}
+async function loadHistoryItem(id){
+  const h=history.find(x=>x.id===id);
+  if(!h)return;
+  currentHistoryId=id;
+  document.getElementById('jobNotes').value=h.notes||notesStore[historyAtsKey(h.ats)]||'';
+  try{
+    let r;
+    if(h.geometry)r={ats:h.ats,lat:+h.lat,lng:+h.lng,geometry:h.geometry};
+    else r=await performJobLookup(parseJobInput(h.ats));
+    await setJob(r,{save:false});
+    selectedDisposal=h.selectedDisposal??null;
+    if(selectedDisposal)selectDisposal(+selectedDisposal);
+    showToast(`Loaded saved LSD • last searched ${formatHistoryDate(h.lastSearched||h.created)}`,4200);
+  }catch(e){showToast(`Could not reload job: ${e.message}`)}
+}
 function h2sPlainText(category){const c=String(category||'').trim();if(/H2S|H₂S|SOUR/i.test(c))return{warn:true,title:'H₂S / sour-gas caution',text:'This record is flagged for H₂S or sour gas. H₂S is a poisonous gas that can be deadly. Follow the site’s H₂S procedures, signage, monitoring and PPE requirements.'};return{warn:false,title:'H₂S information',text:'No H₂S warning is shown in this ST37 record. That does not prove the location is H₂S-free. Always follow the site-specific hazard assessment, signage and monitoring requirements.'}}
 function updateMapJobBar(){const bar=document.getElementById('mapJobBar');if(!job){bar.classList.add('hidden');return}if(!document.getElementById('wellSelectionBar').classList.contains('hidden')){bar.classList.add('hidden');return}bar.classList.remove('hidden');document.getElementById('mapJobTitle').textContent=job.ats;const p=selectedSurfacePad||loadedPads[0],b=p?.bores?.[0];const parts=[];if(loadedPads.length)parts.push(`${loadedPads.length} surface well${loadedPads.length===1?'':'s'} in area`);if(p)parts.push(displaySurfaceDls(p.surfaceDls)||job.ats);if(b?.licensee)parts.push(b.licensee);document.getElementById('mapJobSub').textContent=parts.join(' • ')||'Tap Job, Wells or Disposals below.'}
 function hideWellSelection(){document.getElementById('wellSelectionBar').classList.add('hidden');if(job)updateMapJobBar()}
@@ -576,7 +689,32 @@ function selectSurfacePad(p,boreIndex=0){selectedSurfacePad=p;selectedSurfaceBor
 function openWellDetail(p=selectedSurfacePad,boreIndex=selectedSurfaceBore){if(!p)return;selectedSurfacePad=p;selectedSurfaceBore=boreIndex;const b=p.bores?.[boreIndex]||p.bores?.[0]||{};const safety=h2sPlainText(b.type);document.getElementById('wellDetailTitle').textContent=displaySurfaceDls(p.surfaceDls)||'Surface Well';document.getElementById('wellDetailBody').innerHTML=`<div class="detail-group surface-priority"><h3>Surface Location</h3><div class="detail-grid"><div class="label">Surface DLS</div><div class="value mono">${esc(displaySurfaceDls(p.surfaceDls)||job?.ats||'Not resolved')}</div><div class="label">Surface GPS</div><div class="value mono">${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}</div><div class="label">From job</div><div class="value">${p.distance.toFixed(2)} km straight-line</div></div><div class="actions"><a target="_blank" rel="noopener" href="${directions(job.lat,job.lng,p.lat,p.lng)}">Directions to Surface</a><a target="_blank" rel="noopener" href="${mapsSearch(p.lat,p.lng)}">Open Map</a></div></div><div class="detail-group"><h3>Well</h3>${p.bores.length>1?`<div class="toolbar-row" style="margin-bottom:10px">${p.bores.map((x,i)=>`<button class="chip detail-bore ${i===boreIndex?'active':''}" data-detail-bore="${i}">${i+1}</button>`).join('')}</div>`:''}<div class="detail-grid"><div class="label">Well name</div><div class="value">${esc(b.name||displayUwi(b))}</div><div class="label">UWI</div><div class="value mono">${esc(displayUwi(b))}</div><div class="label">Licence</div><div class="value">${esc(b.licence||'Not reported')}</div><div class="label">Licensee</div><div class="value">${b.licensee?`<button type="button" class="licensee-link" data-detail-licensee="${esc(b.licensee)}">${esc(b.licensee)}</button>`:'Not reported'}</div><div class="label">Status</div><div class="value">${esc(b.status||'Not reported')}</div><div class="label">TVD</div><div class="value">${depthText(b.tvd)}</div><div class="label">TMD</div><div class="value">${depthText(b.tmd)}</div>${b.bhLat&&b.bhLng?`<div class="label">Bottom-hole GPS</div><div class="value mono">${b.bhLat.toFixed(6)}, ${b.bhLng.toFixed(6)}</div>`:''}</div><div class="actions"><a target="_blank" rel="noopener" href="${aerSummaryUrl(b.rawUwi||b.uwi)}">Open AER Well Summary</a></div></div><div class="safety-callout"><strong>${esc(safety.title)}</strong>${esc(safety.text)}</div>`;document.getElementById('wellDetailBackdrop').classList.remove('hidden');document.body.style.overflow='hidden';document.querySelectorAll('[data-detail-bore]').forEach(x=>x.onclick=()=>openWellDetail(p,+x.dataset.detailBore));document.querySelectorAll('[data-detail-licensee]').forEach(x=>x.onclick=()=>{closeWellDetail();openCompanyProfile(x.dataset.detailLicensee)})}
 function closeWellDetail(){document.getElementById('wellDetailBackdrop').classList.add('hidden');document.body.style.overflow=''}
 function wellCard(p,i){const surf=displaySurfaceDls(p.surfaceDls)||job?.ats||'Surface location';const b=p.bores?.[0]||{};return `<article class="well-card"><div class="well-body"><div class="well-section-label">Surface Location</div><div class="well-surface-value">${esc(surf)}</div><div class="well-meta mono">${p.lat.toFixed(6)}, ${p.lng.toFixed(6)} • ${p.distance.toFixed(2)} km from job</div><div style="margin-top:9px"><div class="well-section-label">Well${p.bores.length>1?'s':''}</div><div class="well-name">${esc(b.name||displayUwi(b))}</div><div class="well-lines"><div><b>UWI:</b> <span class="mono">${esc(displayUwi(b))}</span></div><div><b>Licensee:</b> ${b.licensee?`<button class="licensee-link" data-licensee="${esc(b.licensee)}">${esc(b.licensee)}</button>`:'Not reported'}</div><div><b>Status:</b> ${esc(b.status||'Not reported')}</div>${p.bores.length>1?`<div><b>${p.bores.length} wellbores at this surface</b></div>`:''}</div></div><div class="actions"><button data-well-detail="${i}">Details</button><button data-well-focus="${i}">Show on Map</button><a target="_blank" rel="noopener" href="${directions(job.lat,job.lng,p.lat,p.lng)}">Directions</a></div></div></article>`}
-function renderWells(){clearWellMarkersOnly();const q=document.getElementById('wellSearch').value.toLowerCase().trim();const pads=loadedPads.filter(p=>!q||[...p.surfaces.map(s=>`${s.licence} ${s.licensee} ${s.status}`),...p.bores.map(b=>`${b.uwi} ${b.rawUwi} ${b.name} ${b.licence} ${b.licensee} ${b.status}`)].join(' ').toLowerCase().includes(q));document.getElementById('wellStatus').textContent=wellMode.type==='lsd'?`${loadedPads.length} surface location${loadedPads.length===1?'':'s'} start inside this LSD. ${pads.length} shown.`:`${loadedPads.length} surface locations loaded. ${pads.length} shown within ${wellMode.km} km.`;document.getElementById('wellStatus').className='status ok';if(wellsVisible)pads.forEach(p=>{const m=L.marker([p.lat,p.lng],{icon:makeWellIcon(p.bores.length)}).addTo(map);m.on('click',()=>selectSurfacePad(p));wellMarkers.push(m)});document.getElementById('wellGrid').innerHTML=pads.slice(0,100).map((p,i)=>wellCard(p,i)).join('')+(pads.length>100?'<div class="status">Showing the nearest 100 surface locations. Use the search or a smaller radius.</div>':'');bindWellActions(pads);if(loadedPads.length&&!selectedSurfacePad)selectedSurfacePad=loadedPads[0];updateHistorySurfaceInfo(selectedSurfacePad||loadedPads[0]);updateMapJobBar()}
+function renderWells(){
+  clearWellMarkersOnly();
+  const q=document.getElementById('wellSearch').value.toLowerCase().trim();
+  const pads=loadedPads.filter(p=>!q||[...p.surfaces.map(s=>`${s.licence} ${s.licensee} ${s.status}`),...p.bores.map(b=>`${b.uwi} ${b.rawUwi} ${b.name} ${b.licence} ${b.licensee} ${b.status}`)].join(' ').toLowerCase().includes(q));
+  document.getElementById('wellStatus').textContent=wellMode.type==='lsd'?`${loadedPads.length} surface location${loadedPads.length===1?'':'s'} start inside this LSD. ${pads.length} shown.`:`${loadedPads.length} surface locations loaded. ${pads.length} shown within ${wellMode.km} km.`;
+  document.getElementById('wellStatus').className='status ok';
+  if(wellsVisible)pads.forEach(p=>{const m=L.marker([p.lat,p.lng],{icon:makeWellIcon(p.bores.length)}).addTo(map);m.on('click',()=>selectSurfacePad(p));wellMarkers.push(m)});
+  document.getElementById('wellGrid').innerHTML=pads.slice(0,100).map((p,i)=>wellCard(p,i)).join('')+(pads.length>100?'<div class="status">Showing the nearest 100 surface locations. Use the search or a smaller radius.</div>':'');
+  bindWellActions(pads);
+  if(loadedPads.length&&!selectedSurfacePad){
+    const item=currentHistoryId?history.find(x=>x.id===currentHistoryId):null;
+    let match=null,boreIndex=0;
+    if(item?.uwi){
+      const target=String(item.uwi).trim();
+      for(const p of loadedPads){
+        const i=(p.bores||[]).findIndex(b=>displayUwi(b)===target);
+        if(i>=0){match=p;boreIndex=i;break}
+      }
+    }
+    if(!match&&item?.surfaceDls)match=loadedPads.find(p=>displaySurfaceDls(p.surfaceDls)===displaySurfaceDls(item.surfaceDls))||null;
+    selectedSurfacePad=match||loadedPads[0];
+    selectedSurfaceBore=match?boreIndex:0;
+  }
+  updateHistorySurfaceInfo(selectedSurfacePad||loadedPads[0]);
+  updateMapJobBar();
+}
 function bindWellActions(pads){document.querySelectorAll('[data-well-detail]').forEach(b=>b.onclick=()=>openWellDetail(pads[+b.dataset.wellDetail],0));document.querySelectorAll('[data-well-focus]').forEach(b=>b.onclick=()=>{const p=pads[+b.dataset.wellFocus];selectSurfacePad(p);map.setView([p.lat,p.lng],15);closeMobileSheets()});document.querySelectorAll('[data-licensee]').forEach(b=>b.onclick=()=>openCompanyProfile(b.dataset.licensee))}
 const AER_WELL_LAYER='https://gisservices.aer.ca/arcgis/rest/services/OneStop/MS_Asset/MapServer/0/query';
 function wellSearchBounds(){
@@ -666,7 +804,42 @@ function bindNearestButtons(){document.querySelectorAll('[data-pick-disposal]').
 function renderNearest(){if(!job)return;const html=nearestHtml();document.getElementById('nearestDisposals').innerHTML=html;document.getElementById('mobileNearestDisposals').innerHTML=html;bindNearestButtons()}
 function selectDisposal(n){selectedDisposal=n;const f=facilities.find(x=>x.n===n),r=routes.get(n);const html=`<h4>Selected Disposal: #${f.n} ${esc(f.name)}</h4><div class="sub">${esc(f.place)}${r?` • ${(r.distance/1000).toFixed(1)} km • ${formatDuration(r.duration)}`:''}</div><div class="actions"><a target="_blank" rel="noopener" href="${directions(job.lat,job.lng,f.lat,f.lng)}">Directions Job → Disposal</a>${f.phone!=='N/A'?`<a href="tel:${f.phone.split('/')[0].replace(/[^0-9+]/g,'')}">Call</a>`:''}</div>`;['selectedDisposal','mobileSelectedDisposal'].forEach(id=>{const box=document.getElementById(id);box.classList.remove('hidden');box.innerHTML=html});saveJobHistory(true);renderNearest();renderFacilities();updateMapJobBar()}
 async function calculateRoutes(){if(!job)return;const id=++routeRequest;const coords=[[job.lng,job.lat],...facilities.map(f=>[f.lng,f.lat])].map(x=>x.join(',')).join(';');const msg='Calculating road routes...';document.getElementById('routeStatus').textContent=msg;document.getElementById('mobileRouteStatus').textContent=msg;try{const d=await fetchJson(`${ROUTING_SERVICE}/${coords}?sources=0&annotations=distance,duration`,22000);if(id!==routeRequest)return;routes.clear();facilities.forEach((f,i)=>{const dist=d.distances?.[0]?.[i+1],dur=d.durations?.[0]?.[i+1];if(Number.isFinite(dist)&&Number.isFinite(dur))routes.set(f.n,{distance:dist,duration:dur})});const ok=`Showing the 3 closest disposal options by driving distance.`;['routeStatus','mobileRouteStatus'].forEach(x=>{const el=document.getElementById(x);el.textContent=ok;el.className='status ok'})}catch(e){const er='Road distance is unavailable right now. Directions buttons still open Google Maps.';['routeStatus','mobileRouteStatus'].forEach(x=>{const el=document.getElementById(x);el.textContent=er;el.className='status error'})}renderNearest();renderFacilities()}
-async function setJob(result,{save=true}={}){job=result;selectedDisposal=null;selectedSurfacePad=null;selectedSurfaceBore=0;routes.clear();clearWellMarkers();hideWellSelection();document.getElementById('jobArea').classList.remove('hidden');document.getElementById('wellsPanel').classList.remove('hidden');if(jobMarker)map.removeLayer(jobMarker);if(jobPolygon)map.removeLayer(jobPolygon);jobMarker=L.marker([job.lat,job.lng],{icon:makeJobIcon()}).addTo(map);if(job.geometry?.rings)jobPolygon=L.polygon(geometryLatLng(job.geometry),{color:'#176a91',weight:3,fillColor:'#65a9c8',fillOpacity:.08}).addTo(map);if(jobPolygon)map.fitBounds(jobPolygon.getBounds().pad(.18),{maxZoom:15});else map.setView([job.lat,job.lng],14);document.getElementById('jobDetails').innerHTML=`<b>ATS</b><span>${esc(job.ats)}</span><b>GPS</b><span class="mono">${job.lat.toFixed(6)}, ${job.lng.toFixed(6)}</span>`;document.getElementById('jobMaps').href=mapsSearch(job.lat,job.lng);document.getElementById('jobStatus').textContent=`Job loaded: ${job.ats}`;document.getElementById('jobStatus').className='map-status ok';restoreNoteForJob();updateMapJobBar();if(save)saveJobHistory();await Promise.allSettled([calculateRoutes(),loadWells()]);renderFacilities();refreshAtsOverlay()}
+async function setJob(result,{save=true}={}){
+  job=result;
+  const existing=history.find(x=>historyAtsKey(x.ats)===historyAtsKey(job.ats))||null;
+  const priorLast=existing?.lastSearched||existing?.created||null;
+  if(existing)currentHistoryId=existing.id;
+  else if(save)currentHistoryId=null;
+  selectedDisposal=existing?.selectedDisposal??null;
+  selectedSurfacePad=null;
+  selectedSurfaceBore=0;
+  routes.clear();
+  clearWellMarkers();
+  hideWellSelection();
+  document.getElementById('jobArea').classList.remove('hidden');
+  document.getElementById('wellsPanel').classList.remove('hidden');
+  if(jobMarker)map.removeLayer(jobMarker);
+  if(jobPolygon)map.removeLayer(jobPolygon);
+  jobMarker=L.marker([job.lat,job.lng],{icon:makeJobIcon()}).addTo(map);
+  if(job.geometry?.rings)jobPolygon=L.polygon(geometryLatLng(job.geometry),{color:'#176a91',weight:3,fillColor:'#65a9c8',fillOpacity:.08}).addTo(map);
+  if(jobPolygon)map.fitBounds(jobPolygon.getBounds().pad(.18),{maxZoom:15});else map.setView([job.lat,job.lng],14);
+  document.getElementById('jobDetails').innerHTML=`<b>ATS</b><span>${esc(job.ats)}</span><b>GPS</b><span class="mono">${job.lat.toFixed(6)}, ${job.lng.toFixed(6)}</span>`;
+  document.getElementById('jobMaps').href=mapsSearch(job.lat,job.lng);
+  restoreNoteForJob();
+  const saved=save?saveJobHistory(false):existing;
+  if(existing&&priorLast){
+    document.getElementById('jobStatus').textContent=`Job loaded: ${job.ats} • previously searched ${formatHistoryDate(priorLast)}`;
+    showToast(`Previously searched ${formatHistoryDate(priorLast)} • saved notes restored`,4500);
+  }else{
+    document.getElementById('jobStatus').textContent=`Job loaded: ${job.ats}`;
+  }
+  document.getElementById('jobStatus').className='map-status ok';
+  updateMapJobBar();
+  await Promise.allSettled([calculateRoutes(),loadWells()]);
+  if(selectedDisposal)selectDisposal(+selectedDisposal);
+  renderFacilities();
+  refreshAtsOverlay();
+}
 function clearJob(){job=null;selectedDisposal=null;selectedSurfacePad=null;routes.clear();routeRequest++;if(jobMarker)map.removeLayer(jobMarker);if(jobPolygon)map.removeLayer(jobPolygon);jobMarker=jobPolygon=null;clearWellMarkers();hideWellSelection();document.getElementById('jobArea').classList.add('hidden');document.getElementById('wellsPanel').classList.add('hidden');document.getElementById('jobStatus').textContent='Enter a job location or tap the map.';document.getElementById('jobStatus').className='map-status';['selectedDisposal','mobileSelectedDisposal'].forEach(id=>document.getElementById(id).classList.add('hidden'));document.getElementById('mapJobBar').classList.add('hidden');closeMobileSheets();renderFacilities()}
 function openMobileSheet(id){if(window.innerWidth>720){document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});return}document.querySelectorAll('.content>.section').forEach(x=>x.classList.remove('mobile-open'));document.querySelectorAll('.mobile-nav button').forEach(x=>x.classList.remove('active'));const el=document.getElementById(id);if(!el||el.classList.contains('hidden')){showToast(id==='wellsPanel'?'Choose a job first to see surface wells.':'Choose a job first.');return}el.classList.add('mobile-open');document.getElementById('sheetBackdrop').classList.add('show');document.querySelectorAll(`.mobile-nav button[data-scroll="${id}"]`).forEach(x=>x.classList.add('active'))}
 function closeMobileSheets(){document.querySelectorAll('.content>.section').forEach(x=>x.classList.remove('mobile-open'));document.querySelectorAll('.mobile-nav button').forEach(x=>x.classList.remove('active'));document.getElementById('sheetBackdrop').classList.remove('show')}
