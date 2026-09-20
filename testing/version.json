@@ -1,7 +1,7 @@
 {
-  "version": "0.9.3",
+  "version": "0.9.4",
   "releasedAt": "2026-09-20",
-  "title": "Pack 3 universal field intelligence",
+  "title": "Pack 3 universal field intelligence complete",
   "notes": [
     "Turned the map into the primary working home with one universal field search across Alberta LSDs, quarter sections, PIDs, GPS coordinates, saved LSDs, disposal facilities, companies and supported wells/UWIs.",
     "Added direct ten-digit PID recognition in M-RR-TTT-SS-LL order using the existing Alberta legal-land converter.",
@@ -13,6 +13,8 @@
     "Cached the Pack 3 universal-search runtime and ST37 metadata in the PWA shell so status and saved-location search continue to work after an offline reload.",
     "Final integration build includes deterministic loaded-company suggestions, refined search activation behavior and the Pack 3 live regression gate.",
     "Added company and UWI suggestions directly from saved LSD metadata so those searches remain deterministic and useful even when live AER well lookup is unavailable.",
-    "Universal search now reads canonical saved well and company metadata directly from IndexedDB and normalizes UWI formatting so persisted records stay searchable across live-state changes and offline reloads."
+    "Universal search now reads canonical saved well and company metadata directly from IndexedDB and normalizes UWI formatting so persisted records stay searchable across live-state changes and offline reloads.",
+    "Offline data status now reports ST37 only when both cached well snapshot files are actually available on the device; otherwise it clearly reports device-only data instead of implying the well backup is ready.",
+    "The live Pack 3 regression now preloads the real ST37 snapshot and verifies a well result from that snapshot after a full offline reload."
   ]
 }
