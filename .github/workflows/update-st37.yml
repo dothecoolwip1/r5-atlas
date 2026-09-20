@@ -22,6 +22,9 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -40,4 +43,5 @@ jobs:
           git config user.name "r5-atlas-data-bot"
           git config user.email "r5-atlas-data-bot@users.noreply.github.com"
           git commit -m "Refresh AER ST37 fallback data"
+          git pull --rebase origin main
           git push
