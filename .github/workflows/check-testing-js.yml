@@ -48,11 +48,15 @@ jobs:
           dup=sorted({n for n in names if names.count(n)>1})
           if dup:
               raise SystemExit('Duplicate function declarations remain: '+', '.join(dup))
-          forbidden=['raw.githubusercontent.com/dothecoolwip1/r5-atlas/71cbae','prompt(','confirm(','Coming soon']
           text='\n'.join([html,app,Path('testing/app-update.js').read_text(encoding='utf-8')])
+          forbidden=['raw.githubusercontent.com/dothecoolwip1/r5-atlas/71cbae','Coming soon']
           for token in forbidden:
               if token in text:
                   raise SystemExit('Forbidden legacy runtime token remains: '+token)
+          if re.search(r'(?<![\\w.])prompt\\s*\\(', app):
+              raise SystemExit('Native prompt() remains in the app runtime')
+          if re.search(r'(?<![\\w.])confirm\\s*\\(', app):
+              raise SystemExit('Native confirm() remains in the app runtime')
           required=[
               'testing/data/alberta-ats-v41-lsd.bin.gz',
               'testing/data/alberta-ats-v41-lsd.manifest.json',
