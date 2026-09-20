@@ -1,0 +1,11 @@
+{
+  "source": "Alberta Energy Regulator ST37",
+  "sourceUrl": "https://www.aer.ca/prd/documents/sts/st37/ST_37_Excel.zip",
+  "sourceLastModified": "Fri, 04 Sep 2026 17:16:40 GMT",
+  "sourceEtag": "0x8DF0AA849098A8C",
+  "sourceContentLength": "183641166",
+  "generatedAt": "2026-09-20T15:05:36.217207+00:00",
+  "surfaceRecords": 539890,
+  "bottomHoleRecords": 538629,
+  "formatVersion": 1
+}
