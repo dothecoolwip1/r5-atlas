@@ -176,6 +176,7 @@ jobs:
               firstCardTop:firstCard?.top||null
             };
           });
+          console.log('WELLS_MOBILE_LAYOUT',JSON.stringify(wellsMobileLayout));
           assert(wellsMobileLayout.uniqueRows===2 && wellsMobileLayout.firstRowCount===3,'Mobile well radius controls are not a compact 3 by 2 grid');
           assert(Math.min(...wellsMobileLayout.chipWidths)>80,'Mobile well radius controls are too narrow to tap comfortably');
           assert(wellsMobileLayout.toolbarHeight<235,'Mobile Wells toolbar is still too tall');
