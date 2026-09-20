@@ -9,12 +9,12 @@
 <link rel="preconnect" href="https://unpkg.com">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <link rel="stylesheet" href="styles/app.css">
-<meta name="r5-app-version" content="0.7.1"><meta name="theme-color" content="#16191f"><link rel="manifest" href="manifest.webmanifest">
+<meta name="r5-app-version" content="0.8.0"><meta name="theme-color" content="#16191f"><link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
 <header class="topbar">
   <div class="brand"><img class="brand-logo" src="assets/r5-atlas-logo.png" alt="R5 Atlas logo"><div class="brand-text"><div class="brand-title">R5 Atlas</div><div class="brand-sub">From Surface to Disposal.</div></div></div>
-  <div class="data-pill">Live well data • Offline backup • App v0.7.1</div>
+  <div class="data-pill">Live well data • Offline backup • App v0.8.0</div>
 </header>
 <div class="page">
   <section id="mapSection" class="map-shell">
@@ -44,7 +44,7 @@
       <div id="jobArea" class="dashboard-grid hidden">
         <div class="stack">
           <div class="card v21-active-lsd"><div class="card-title-row"><div><div class="v21-eyebrow">ACTIVE LOCATION</div><h3>Active LSD</h3></div><span class="v21-mini-badge">Alberta ATS</span></div><div id="jobDetails" class="kv"></div><div class="actions"><button id="copyJob">Copy Job Info</button><a id="jobMaps" target="_blank" rel="noopener">Open in Google Maps</a></div></div>
-          <div class="card"><div class="card-title-row"><div><div class="v21-eyebrow">SAVED WITH THIS LSD</div><h3>LSD Notes</h3></div><span id="noteSaveState" class="save-state saved">Saved</span></div><textarea id="jobNotes" class="notes" placeholder="Gate codes, contacts, pricing, disposal instructions, job notes..."></textarea><div class="smallnote">Notes save automatically on this device.</div></div>
+          <div class="card"><div class="card-title-row"><div><div class="v21-eyebrow">SAVED WITH THIS LSD</div><h3>Field Notes</h3></div><span id="noteSaveState" class="save-state saved">Saved</span></div><textarea id="jobNotes" class="notes" maxlength="6000" placeholder="Gate codes, contacts, pricing, disposal instructions, access notes, hazards, job details..."></textarea><div class="note-tools"><div><span id="noteMeta" class="smallnote">0 characters</span><div class="smallnote">Saved automatically in this device database.</div></div><div class="actions note-actions"><button id="copyNotes" type="button">Copy notes</button><button id="clearNotes" type="button">Clear notes</button></div></div></div>
         </div>
         <div class="card"><div class="card-title-row"><h3>Nearest Disposal Options</h3><span class="smallnote">Driving distance</span></div><div id="routeStatus" class="status">Select a job to calculate road routes.</div><div id="nearestDisposals" class="results"></div><div id="selectedDisposal" class="selected-box hidden"></div></div>
       </div>
@@ -70,7 +70,17 @@
     </section>
 
     <section id="historySection" class="section panel"><div class="mobile-sheet-head"><b>Saved LSDs</b><button type="button" data-sheet-close aria-label="Close">×</button></div>
-      <div class="well-panel-head v21-panel-head"><div><div class="v21-eyebrow">FIELD MEMORY</div><h3 style="margin:0">Saved LSDs</h3><div class="smallnote">One record per LSD. Notes and search history stay together on this device.</div></div><div class="v21-head-actions"><span id="historyCountBadge" class="v21-count-badge">0 saved</span><button id="clearHistory" class="mini-btn">Clear saved</button></div></div>
+      <div class="well-panel-head v21-panel-head"><div><div class="v21-eyebrow">FIELD MEMORY</div><h3 style="margin:0">Saved LSDs</h3><div class="smallnote">Canonical device records with notes, visits, favourite status, selected wells and disposal choices.</div></div><div class="v21-head-actions"><span id="historyCountBadge" class="v21-count-badge">0 saved</span><button id="clearHistory" class="mini-btn">Clear saved</button></div></div>
+      <div class="saved-tools">
+        <div class="saved-search-row"><input id="savedSearch" class="search-input" aria-label="Search saved LSDs" placeholder="Search LSD, notes, UWI, company or disposal"><button id="clearSavedSearch" class="mini-btn" type="button">Clear</button></div>
+        <div class="saved-control-row">
+          <button id="savedFavouritesOnly" class="saved-filter-btn" type="button" aria-pressed="false">☆ Favourites</button>
+          <label class="saved-select-label">Sort<select id="savedSort" aria-label="Sort saved LSDs"><option value="recent">Recently visited</option><option value="visits">Most visited</option><option value="favorite">Favourites first</option><option value="oldest">Oldest first</option><option value="az">LSD A to Z</option></select></label>
+          <label class="saved-select-label">Nearby radius<select id="nearbyRadius" aria-label="Nearby saved LSD alert radius"><option value="0.5">0.5 km</option><option value="1">1 km</option><option value="2">2 km</option><option value="5">5 km</option></select></label>
+          <button id="nearbyAlertsToggle" class="saved-filter-btn" type="button" aria-pressed="false">Nearby alerts: Off</button>
+        </div>
+        <div id="savedFilterStatus" class="smallnote">Showing all saved LSDs. Nearby alerts are off by default and only run while R5 Atlas is open.</div>
+      </div>
       <div id="historyList" class="history-list"></div>
     </section>
   </main>
@@ -104,6 +114,7 @@
 <script src="js/lsd-converter.bundle.js"></script>
 <script src="data/facilities.js"></script>
 <script src="js/core/storage.js"></script>
+<script src="js/core/device-store.js"></script>
 <script src="js/core/providers.js"></script>
 <script src="js/app.js"></script>
 <script src="app-update.js" defer></script>
