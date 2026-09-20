@@ -778,7 +778,9 @@ async function loadWells(){
     selectedSurfacePad=null;
     selectedSurfaceBore=0;
     renderWells();
-    status.textContent+=(status.textContent?' ':'')+'Live AER data.';
+    const checked=new Date().toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+    status.textContent+=(status.textContent?' ':'')+'Source: live AER OneStop.';
+    document.getElementById('st37Status').textContent=`Live AER OneStop • checked ${checked}`;
     return;
   }catch(liveError){
     console.warn('Live AER well lookup failed, using ST37 fallback',liveError);
@@ -794,6 +796,7 @@ async function loadWells(){
     selectedSurfacePad=null;
     selectedSurfaceBore=0;
     renderWells();
+    document.getElementById('st37Status').textContent='Offline fallback • AER ST37 August 2026 snapshot';
   }catch(e){
     status.textContent=e?.message||'Well data could not be loaded.';
     status.className='status error';
