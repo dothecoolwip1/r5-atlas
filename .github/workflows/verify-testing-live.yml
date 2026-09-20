@@ -31,7 +31,7 @@ jobs:
           import { chromium } from 'playwright';
 
           const base='https://dothecoolwip1.github.io/r5-atlas/testing/';
-          const expected='0.10.0';
+          const expected='0.10.1';
           const pid='5070483206';
           const canonical='06-32-048-07 W5M';
           const legacyKey='albertaOilfieldFieldMapHistoryV15';
@@ -231,8 +231,9 @@ jobs:
           const firstWellLabel=await page.locator('.well-card').first().getAttribute('aria-label');
           assert(!!firstWellLabel,'Well cards do not have meaningful accessible labels');
           const findHeight=await page.locator('#findJob').evaluate(el=>el.getBoundingClientRect().height);
-          const clearHeight=await page.locator('#clearWellSearch').evaluate(el=>el.getBoundingClientRect().height);
-          assert(findHeight>=44 && clearHeight>=44,'Pack 4 controls are below the 44 px touch target minimum');
+          const clearMinHeight=await page.locator('#clearWellSearch').evaluate(el=>parseFloat(getComputedStyle(el).minHeight)||0);
+          const fieldToggleMinHeight=await page.locator('#fieldModeToggle').evaluate(el=>parseFloat(getComputedStyle(el).minHeight)||0);
+          assert(findHeight>=44 && clearMinHeight>=44 && fieldToggleMinHeight>=44,'Pack 4 controls are below the 44 px touch target minimum');
 
           await page.locator('#fieldModeToggle').click();
           assert(await page.locator('body').evaluate(el=>el.classList.contains('field-mode')),'Field Mode did not activate');
