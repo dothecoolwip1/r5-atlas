@@ -1,5 +1,5 @@
 {
-  "version": "0.9.4",
+  "version": "0.9.5",
   "releasedAt": "2026-09-20",
   "title": "Pack 3 universal field intelligence complete",
   "notes": [
@@ -15,6 +15,8 @@
     "Added company and UWI suggestions directly from saved LSD metadata so those searches remain deterministic and useful even when live AER well lookup is unavailable.",
     "Universal search now reads canonical saved well and company metadata directly from IndexedDB and normalizes UWI formatting so persisted records stay searchable across live-state changes and offline reloads.",
     "Offline data status now reports ST37 only when both cached well snapshot files are actually available on the device; otherwise it clearly reports device-only data instead of implying the well backup is ready.",
-    "The live Pack 3 regression now preloads the real ST37 snapshot and verifies a well result from that snapshot after a full offline reload."
+    "The live Pack 3 regression now preloads the real ST37 snapshot and verifies a well result from that snapshot after a full offline reload.",
+    "Preserved saved well, UWI and company metadata when the current live or offline well dataset does not contain the previously selected well. Nearby data no longer silently replaces a saved selection.",
+    "Hardened the Pack 3 live regression so asynchronous search assertions wait for completed search cycles instead of fixed browser timing."
   ]
 }
