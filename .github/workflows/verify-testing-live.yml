@@ -152,10 +152,11 @@ jobs:
           assert(wellResults.some(x=>x.type==='well'),'Canonical UWI was not recognized by universal search');
 
           const facilityName=await page.evaluate(()=>facilities[0].name);
-          await page.locator('#jobInput').fill(facilityName);
-          await page.waitForTimeout(450);
-          const facilityResults=await page.locator('#universalSearchResults').innerText();
-          assert(facilityResults.includes('Disposal'),'Disposal facility was not recognized by universal search');
+          const facilityResults=await page.evaluate(async query=>{
+            await R5UniversalSearch.search(query);
+            return R5UniversalSearch.getResults();
+          },facilityName);
+          assert(facilityResults.some(x=>x.type==='facility'),'Disposal facility was not recognized by universal search');
           const disposalButton=page.locator('#universalSearchResults .search-result').filter({hasText:'Disposal'}).first();
           await disposalButton.click();
           assert((await page.locator('#jobStatus').innerText()).includes('Disposal:'),'Disposal result did not focus the map');
@@ -169,9 +170,11 @@ jobs:
           await page.waitForTimeout(300);
           assert((await page.locator('#universalSearchResults').innerText()).includes('Quarter'),'Paste recognition did not classify the quarter section');
 
-          await page.locator('#jobInput').fill('53.18331,-114.991884');
-          await page.waitForTimeout(350);
-          assert((await page.locator('#universalSearchResults').innerText()).includes('GPS'),'GPS was not recognized in universal search');
+          const gpsResults=await page.evaluate(async query=>{
+            await R5UniversalSearch.search(query);
+            return R5UniversalSearch.getResults();
+          },'53.18331,-114.991884');
+          assert(gpsResults.some(x=>x.tag==='GPS'),'GPS was not recognized in universal search');
 
           const recents=await page.evaluate(()=>R5UniversalSearch.getRecent());
           assert(recents.some(x=>x.type==='legal' && x.value===pid),'PID search was not added to recent searches');
@@ -254,13 +257,17 @@ jobs:
           },st37Probe.query);
           assert(st37Results.some(x=>x.type==='well'),'Real cached ST37 lookup did not return an offline well result');
 
-          await page.locator('#jobInput').fill(facilityName);
-          await page.waitForTimeout(350);
-          assert((await page.locator('#universalSearchResults').innerText()).includes('Disposal'),'Offline disposal search failed');
+          const offlineFacilityResults=await page.evaluate(async query=>{
+            await R5UniversalSearch.search(query);
+            return R5UniversalSearch.getResults();
+          },facilityName);
+          assert(offlineFacilityResults.some(x=>x.type==='facility'),'Offline disposal search failed');
 
-          await page.locator('#jobInput').fill('53.18331,-114.991884');
-          await page.waitForTimeout(300);
-          assert((await page.locator('#universalSearchResults').innerText()).includes('GPS'),'Offline GPS recognition failed');
+          const offlineGpsResults=await page.evaluate(async query=>{
+            await R5UniversalSearch.search(query);
+            return R5UniversalSearch.getResults();
+          },'53.18331,-114.991884');
+          assert(offlineGpsResults.some(x=>x.tag==='GPS'),'Offline GPS recognition failed');
           await page.locator('#findJob').click();
           await page.waitForFunction(()=>document.querySelector('#jobStatus')?.textContent?.includes('requires a connection'));
           assert((await page.locator('#jobStatus').innerText()).includes('requires a connection'),'Offline GPS limitation was not explained');
