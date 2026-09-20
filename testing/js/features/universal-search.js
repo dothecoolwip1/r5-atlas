@@ -129,29 +129,36 @@
   }
 
 
-  function savedEntitySuggestions(q){
+  function compactSearchToken(value){
+    return String(value||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  }
+
+  function savedEntitySuggestionsFromRecords(q,records,sourceLabel){
     const query=String(q||'').toLowerCase().trim();
+    const compactQuery=compactSearchToken(q);
     if(!query)return[];
     const out=[];
     const companies=new Set();
-    for(const h of history||[]){
+    for(const h of records||[]){
       const w=h.selectedWell||{};
       const company=String(w.licensee||h.licensee||'').trim();
       if(company&&company.toLowerCase().includes(query)&&!companies.has(company.toLowerCase())){
         companies.add(company.toLowerCase());
         out.push({
           type:'company',key:'saved-company:'+company.toLowerCase(),label:company,value:company,
-          subtitle:'Company from saved LSD '+String(h.ats||''),tag:'Company',icon:'◉',score:h.favorite?109:99,
+          subtitle:'Company from '+(sourceLabel||'saved LSD')+' '+String(h.ats||''),tag:'Company',icon:'◉',score:h.favorite?109:99,
           favorite:!!h.favorite,payload:{name:company}
         });
       }
       const uwi=String(w.uwi||h.uwi||'').trim();
-      const licence=String(w.licence||'').trim();
-      const hay=[uwi,licence,w.licensee,h.licensee,w.surfaceDls,h.surfaceDls,h.ats].filter(Boolean).join(' ').toLowerCase();
-      if((uwi||licence)&&hay.includes(query)){
+      const licence=String(w.licence||h.licence||'').trim();
+      const fields=[uwi,licence,w.licensee,h.licensee,w.surfaceDls,h.surfaceDls,h.ats].filter(Boolean);
+      const hay=fields.join(' ').toLowerCase();
+      const compactHay=compactSearchToken(fields.join(' '));
+      if((uwi||licence)&&(hay.includes(query)||(compactQuery&&compactHay.includes(compactQuery)))){
         out.push({
           type:'well',key:'saved-well:'+(uwi||licence)+'|'+String(h.key||h.id),label:uwi||('Licence '+licence),value:uwi||licence,
-          subtitle:[company,w.surfaceDls||h.surfaceDls||h.ats,'Saved LSD'].filter(Boolean).join(' • '),
+          subtitle:[company,w.surfaceDls||h.surfaceDls||h.ats,sourceLabel||'Saved LSD'].filter(Boolean).join(' • '),
           tag:'Well',icon:'●',score:h.favorite?110:100,favorite:!!h.favorite,
           payload:{
             uwi:uwi,licence:licence,licensee:company,surfaceDls:w.surfaceDls||h.surfaceDls||h.ats,
@@ -163,6 +170,21 @@
       if(out.length>=8)break;
     }
     return out;
+  }
+
+  function savedEntitySuggestions(q){
+    return savedEntitySuggestionsFromRecords(q,history||[],'saved LSD');
+  }
+
+  async function savedDeviceEntitySuggestions(q){
+    if(!globalThis.R5DeviceStore||!String(q||'').trim())return[];
+    try{
+      const records=await R5DeviceStore.getAllSavedLocations();
+      return savedEntitySuggestionsFromRecords(q,records,'device record');
+    }catch(e){
+      console.warn('Canonical saved-location search unavailable',e);
+      return[];
+    }
   }
 
   function facilitySuggestions(q){
@@ -442,6 +464,9 @@
       return;
     }
 
+    const deviceEntities=await savedDeviceEntitySuggestions(q);
+    if(generation!==searchGeneration)return;
+    instant=instant.concat(deviceEntities);
     const ranked=dedupeAndRank(instant);
     if(direct){
       renderResults(ranked);
