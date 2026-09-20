@@ -31,7 +31,7 @@ jobs:
           node --check testing/data/facilities.js
           node --check testing/app-update.js
           node --check testing/sw.js
-      - name: Enforce testing architecture through Pack 3
+      - name: Enforce testing architecture through Pack 4
         shell: bash
         run: |
           python - <<'PY'
@@ -51,7 +51,9 @@ jobs:
           pack2=Path('testing/js/features/saved-locations.js').read_text(encoding='utf-8')
           device=Path('testing/js/core/device-store.js').read_text(encoding='utf-8')
           pack3=Path('testing/js/features/universal-search.js').read_text(encoding='utf-8')
-          text='\n'.join([html,app,pack2,device,pack3,Path('testing/app-update.js').read_text(encoding='utf-8')])
+          pack4=Path('testing/js/features/field-ui.js').read_text(encoding='utf-8')
+          css=Path('testing/styles/app.css').read_text(encoding='utf-8')
+          text='\n'.join([html,app,pack2,device,pack3,pack4,css,Path('testing/app-update.js').read_text(encoding='utf-8')])
           forbidden=['raw.githubusercontent.com/dothecoolwip1/r5-atlas/71cbae','Coming soon']
           for token in forbidden:
               if token in text:
@@ -69,6 +71,7 @@ jobs:
               'testing/js/core/providers.js',
               'testing/js/features/saved-locations.js',
               'testing/js/features/universal-search.js',
+              'testing/js/features/field-ui.js',
           ]
           for p in required:
               if not Path(p).exists():
@@ -82,7 +85,7 @@ jobs:
               'Saved LSD search':'id="savedSearch"',
               'Saved LSD sorting':'id="savedSort"',
               'nearby radius':'id="nearbyRadius"',
-              'Pack 3 version':'content="0.9.5"',
+              'Pack 4 version':'content="0.10.0"',
           }
           combined='\n'.join([html,pack2,device])
           for label,token in pack2_tokens.items():
@@ -114,11 +117,36 @@ jobs:
           for label,token in pack3_tokens.items():
               if token not in combined3:
                   raise SystemExit(f'Pack 3 check failed, missing {label}: {token}')
+          pack4_tokens={
+              'Field Mode toggle':'id="fieldModeToggle"',
+              'persistent Field Mode':'r5-atlas-field-mode-v1',
+              'desktop workspace':'desktop-workspace',
+              'tablet landscape layout':'tablet-landscape',
+              'desktop three panel grid':'grid-template-columns:minmax(300px,340px)',
+              'marker clustering':'markerClusterGroup',
+              'facility cluster':'facilityClusterLayer',
+              'well cluster':'wellClusterLayer',
+              'semantic LSD marker':'r5-marker-lsd',
+              'semantic well marker':'r5-marker-well',
+              'semantic disposal marker':'r5-marker-disposal',
+              'non colour filter state':'data-state-label',
+              'minimum touch target':'--r5-control-min:44px',
+              'focus visible':'focus-visible',
+              'reduced motion':'prefers-reduced-motion',
+              'map marker accessibility':'keyboard:true',
+          }
+          combined4='\n'.join([html,app,pack4,css])
+          for label,token in pack4_tokens.items():
+              if token not in combined4:
+                  raise SystemExit(f'Pack 4 check failed, missing {label}: {token}')
           sw=Path('testing/sw.js').read_text(encoding='utf-8')
-          for asset in ['./js/core/device-store.js','./js/features/saved-locations.js','./js/features/universal-search.js','./data/st37-meta.json']:
+          for asset in ['./js/core/device-store.js','./js/features/saved-locations.js','./js/features/universal-search.js','./js/features/field-ui.js','./data/st37-meta.json']:
               if asset not in sw:
                   raise SystemExit('Offline runtime is not precached: '+asset)
-          print('Pack 1, Pack 2 and Pack 3 architecture checks passed')
+          for external in ['leaflet.markercluster@1.5.3/dist/MarkerCluster.css','leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js']:
+              if external not in sw or external not in html:
+                  raise SystemExit('Pack 4 cluster dependency is not available online and offline: '+external)
+          print('Pack 1 through Pack 4 architecture checks passed')
           PY
       - name: Check React and TypeScript migration workspace
         working-directory: app
