@@ -703,7 +703,7 @@ body.field-mode .leaflet-control-zoom a{width:48px!important;height:48px!importa
   }
   #wellsPanel .well-search-wrap{
     display:grid;
-    grid-template-columns:minmax(0,1fr) 58px;
+    grid-template-columns:minmax(0,1fr) 54px 76px;
     gap:6px;
     margin-top:8px;
     align-items:center;
@@ -712,47 +712,46 @@ body.field-mode .leaflet-control-zoom a{width:48px!important;height:48px!importa
     grid-column:1;
     width:100%;
     min-width:0;
-    height:42px;
-    min-height:42px;
+    height:44px;
+    min-height:44px;
     padding:0 10px;
     border:1px solid #d3dde3;
     border-radius:11px;
     background:#fff;
-    font-size:12px;
+    font-size:11px;
   }
   #wellsPanel #clearWellSearch{
     grid-column:2;
-    height:42px;
-    min-height:42px;
-    padding:0 8px;
+    height:44px;
+    min-height:44px;
+    padding:0 6px;
     border-radius:11px;
-    font-size:10px;
-  }
-  #wellsPanel #hideWells{
-    grid-column:1 / -1;
-    justify-self:end;
-    width:auto;
-    min-width:92px;
-    height:34px;
-    min-height:34px;
-    margin-top:0;
-    padding:0 11px;
-    border:1px solid #d4dee4;
-    border-radius:10px;
-    background:#edf2f5;
-    color:#3d5562;
     font-size:9.5px;
   }
+  #wellsPanel #hideWells{
+    grid-column:3;
+    width:100%;
+    min-width:0;
+    height:44px;
+    min-height:44px;
+    margin:0;
+    padding:0 6px;
+    border:1px solid #d4dee4;
+    border-radius:11px;
+    background:#edf2f5;
+    color:#3d5562;
+    font-size:9px;
+  }
   #wellsPanel #wellStatus{
-    margin-top:7px;
-    padding:7px 9px;
+    margin-top:6px;
+    padding:6px 8px;
     min-height:0;
     border:0;
     border-radius:9px;
     background:#edf7f1;
     color:#2e6b50;
-    font-size:9.5px;
-    line-height:1.25;
+    font-size:9px;
+    line-height:1.2;
   }
   #wellsPanel #wellStatus.error{
     background:#fff1f1;
