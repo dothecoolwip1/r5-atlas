@@ -31,7 +31,7 @@ jobs:
           import { chromium } from 'playwright';
 
           const base='https://dothecoolwip1.github.io/r5-atlas/testing/';
-          const expected='0.10.6';
+          const expected='0.10.7';
           const pid='5070483206';
           const canonical='06-32-048-07 W5M';
           const legacyKey='albertaOilfieldFieldMapHistoryV15';
@@ -158,6 +158,36 @@ jobs:
           assert(!(await page.locator('#navLsdState').isHidden()),'LSD navigation state did not activate');
           assert(!(await page.locator('#navWellsState').isHidden()),'Wells navigation state did not activate');
           assert(!(await page.locator('#navSavedState').isHidden()),'Saved navigation state did not activate');
+
+          await page.locator('.mobile-nav button[data-scroll="wellsPanel"]').click();
+          await page.waitForSelector('#wellsPanel.mobile-open');
+          const wellsMobileLayout=await page.evaluate(()=>{
+            const sheet=document.getElementById('wellsPanel').getBoundingClientRect();
+            const toolbar=document.querySelector('#wellsPanel .well-toolbar').getBoundingClientRect();
+            const chips=[...document.querySelectorAll('#wellsPanel .v21-radius-row .well-radius')].map(el=>el.getBoundingClientRect());
+            const uniqueRows=[...new Set(chips.map(r=>Math.round(r.top)))];
+            const firstCard=document.querySelector('#wellsPanel .well-card')?.getBoundingClientRect()||null;
+            return{
+              sheetTop:sheet.top,
+              toolbarHeight:toolbar.height,
+              uniqueRows:uniqueRows.length,
+              firstRowCount:chips.filter(r=>Math.abs(r.top-chips[0].top)<3).length,
+              chipWidths:chips.map(r=>r.width),
+              firstCardTop:firstCard?.top||null
+            };
+          });
+          assert(wellsMobileLayout.uniqueRows===2 && wellsMobileLayout.firstRowCount===3,'Mobile well radius controls are not a compact 3 by 2 grid');
+          assert(Math.min(...wellsMobileLayout.chipWidths)>80,'Mobile well radius controls are too narrow to tap comfortably');
+          assert(wellsMobileLayout.toolbarHeight<235,'Mobile Wells toolbar is still too tall');
+          assert(wellsMobileLayout.firstCardTop && wellsMobileLayout.firstCardTop-wellsMobileLayout.sheetTop<360,'Well results still start too far down the mobile sheet');
+          assert((await page.evaluate(()=>history.state?.r5AtlasSheet))==='wellsPanel','Opening Wells did not create an in-app Back state');
+
+          const urlBeforeSheetBack=page.url();
+          await page.goBack({timeout:10000}).catch(()=>null);
+          await page.waitForFunction(()=>!document.querySelector('.content>.section.mobile-open'));
+          assert(page.url()===urlBeforeSheetBack,'Android-style Back navigated away instead of closing the Wells sheet');
+          assert(await page.locator('#jobInput').isVisible(),'App content disappeared after closing Wells with Back');
+          assert(!await page.locator('#sheetBackdrop').evaluate(el=>el.classList.contains('show')),'Sheet backdrop remained after Back closed Wells');
 
           let records=await page.evaluate(()=>R5DeviceStore.getAllSavedLocations());
           assert(records.length===1,'Pack 3 created duplicate canonical LSD records');
@@ -418,6 +448,6 @@ jobs:
           assert(pageErrors.length===0,'Page errors after offline reload: '+pageErrors.join(' | '));
           await page.screenshot({path:'pack4-mobile-ui-offline.png',fullPage:true});
           await browser.close();
-          console.log('Pack 4 mobile UI correction passed: clean phone header, compact search, horizontal filters, full-height map, contextual controls, clustered markers, Settings-based Field Mode, tablet/desktop layouts and the full offline regression.');
+          console.log('Mobile UX regression passed: clean map UI, compact Wells sheet, Android Back closes sheets in-app, clustered markers, Settings-based Field Mode, responsive layouts and the full offline regression.');
           JS
           node verify.mjs
