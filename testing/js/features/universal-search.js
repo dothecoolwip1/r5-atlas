@@ -9,6 +9,7 @@
   const findButton=document.getElementById('findJob');
   const clearButton=document.getElementById('clearUniversalSearch');
   const resultsHost=document.getElementById('universalSearchResults');
+  const mapShell=document.getElementById('mapSection');
   const jobStatus=document.getElementById('jobStatus');
   let results=[];
   let activeIndex=-1;
@@ -266,6 +267,7 @@
     activeIndex=results.length?0:-1;
     if(!results.length&&!loadingText){
       resultsHost.classList.add('hidden');
+      mapShell?.classList.remove('search-open');
       resultsHost.innerHTML='';
       return;
     }
@@ -280,6 +282,7 @@
     }).join('');
     resultsHost.innerHTML=html;
     resultsHost.classList.remove('hidden');
+    mapShell?.classList.add('search-open');
     resultsHost.querySelectorAll('[data-search-index]').forEach(function(button){
       button.addEventListener('mouseenter',function(){
         setActiveIndex(Number(button.dataset.searchIndex));
@@ -303,6 +306,7 @@
 
   function closeResults(){
     resultsHost.classList.add('hidden');
+    mapShell?.classList.remove('search-open');
     activeIndex=-1;
   }
 
