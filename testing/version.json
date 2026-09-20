@@ -1,12 +1,12 @@
 {
-  "version": "0.5.5",
+  "version": "0.5.6",
   "releasedAt": "2026-09-20",
-  "title": "Persistent LSD records and well source visibility",
+  "title": "Monthly ST37 fallback automation",
   "notes": [
-    "Searching the same LSD now reopens and updates the existing saved record instead of creating duplicate history entries.",
-    "Saved notes, disposal selection, surface well information, first searched time, last searched time, and search count stay attached to the LSD.",
-    "Existing duplicate LSD history entries are merged automatically on load while preserving saved information.",
-    "The Wells panel now clearly shows whether results came from live AER OneStop or the offline August 2026 ST37 fallback.",
-    "Online well searches query the AER OneStop Well Licences layer first."
+    "Online well searches still use the live AER OneStop Well Licences layer first.",
+    "The offline ST37 fallback now looks for automatically refreshed compact ST37 files before using the older embedded snapshot.",
+    "A GitHub Actions updater now checks the official AER ST37 Excel source every day and rebuilds the fallback only when the source changes.",
+    "The Wells panel reports whether the current results came from live AER OneStop or the offline ST37 fallback.",
+    "Includes persistent one-record-per-LSD history with restored notes, saved information, first searched time, last searched time, and search count."
   ]
 }
