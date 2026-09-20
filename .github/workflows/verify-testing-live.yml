@@ -167,8 +167,12 @@ jobs:
             el.dispatchEvent(new Event('paste',{bubbles:true}));
           });
           await page.waitForFunction(()=>document.querySelector('#jobStatus')?.textContent?.includes('Quarter section detected'));
-          await page.waitForTimeout(300);
-          assert((await page.locator('#universalSearchResults').innerText()).includes('Quarter'),'Paste recognition did not classify the quarter section');
+          const quarterResults=await page.evaluate(async()=>{
+            const query=document.getElementById('jobInput').value;
+            await R5UniversalSearch.search(query);
+            return R5UniversalSearch.getResults();
+          });
+          assert(quarterResults.some(x=>x.tag==='Quarter'),'Paste recognition did not classify the quarter section');
 
           const gpsResults=await page.evaluate(async query=>{
             await R5UniversalSearch.search(query);
