@@ -1,0 +1,44 @@
+name: Refresh AER ST37 fallback
+
+on:
+  schedule:
+    - cron: '17 14 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/update-st37.yml'
+      - 'tools/update_st37_compact.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-aer-st37
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install parser dependencies
+        run: python -m pip install --upgrade requests openpyxl
+      - name: Check AER and rebuild compact ST37 files when changed
+        run: python tools/update_st37_compact.py
+      - name: Commit refreshed fallback data
+        shell: bash
+        run: |
+          git add testing/data/st37-meta.json testing/data/st37-surface.txt.gz testing/data/st37-bore.txt.gz
+          if git diff --cached --quiet; then
+            echo "AER ST37 has not changed."
+            exit 0
+          fi
+          git config user.name "r5-atlas-data-bot"
+          git config user.email "r5-atlas-data-bot@users.noreply.github.com"
+          git commit -m "Refresh AER ST37 fallback data"
+          git push
