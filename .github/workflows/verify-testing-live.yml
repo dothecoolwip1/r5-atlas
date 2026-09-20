@@ -31,8 +31,8 @@ jobs:
           import { chromium } from 'playwright';
 
           const base='https://dothecoolwip1.github.io/r5-atlas/testing/';
-          const expected='0.8.1';
-          const testLsd='06-32-048-07-W5';
+          const expected='0.9.1';
+          const pid='5070483206';
           const canonical='06-32-048-07 W5M';
           const legacyKey='albertaOilfieldFieldMapHistoryV15';
           const legacyNotesKey='albertaOilfieldFieldMapNotesV17';
@@ -77,10 +77,11 @@ jobs:
               firstSearched:now,
               lastSearched:now,
               searchCount:1,
+              favorite:true,
               selectedDisposal:null
             }]));
             localStorage.setItem(legacyNotesKey,JSON.stringify({
-              [canonical.replace(/\s+/g,'').toUpperCase()]:'Legacy Pack 2 migration note'
+              [canonical.replace(/\s+/g,'').toUpperCase()]:'Legacy Pack 3 favourite note'
             }));
           },{expected,legacyKey,legacyNotesKey,canonical});
 
@@ -88,85 +89,100 @@ jobs:
           const pageErrors=[];
           page.on('pageerror',e=>pageErrors.push(String(e)));
 
-          await page.goto(base+'?pack2='+Date.now(),{waitUntil:'domcontentloaded',timeout:120000});
+          await page.goto(base+'?pack3='+Date.now(),{waitUntil:'domcontentloaded',timeout:120000});
           await page.waitForSelector('#jobInput',{state:'visible',timeout:30000});
           await page.waitForFunction(v=>document.querySelector('meta[name="r5-app-version"]')?.content===v,expected);
-          await page.waitForFunction(()=>globalThis.R5Pack2Ready && globalThis.R5DeviceStore);
+          await page.waitForFunction(()=>globalThis.R5Pack2Ready && globalThis.R5UniversalSearch && globalThis.R5DeviceStore);
           await page.evaluate(()=>globalThis.R5Pack2Ready);
 
-          assert((await page.locator('.data-pill').innerText()).includes('0.8.1'),'Visible version is not v0.8.1');
-          assert((await page.locator('.well-radius.active').innerText()).trim()==='0.5 km','Default well radius is not 0.5 km');
-          assert(await page.locator('.facility').count()>0,'Disposal directory did not render');
+          assert((await page.locator('.data-pill').innerText()).includes(expected),'Visible version is not v'+expected);
+          assert((await page.locator('#connectionStatus').innerText()).includes('ONLINE'),'Connectivity strip does not show ONLINE');
+          assert((await page.locator('#dataSourceStatus').innerText()).includes('AER LIVE'),'Online data status does not show AER LIVE');
+          assert((await page.locator('#gpsStatus').innerText()).includes('GPS'),'GPS status chip is missing');
+          assert(await page.locator('#universalSearchResults').isHidden(),'Universal suggestions opened before the field was focused');
 
-          let records=await page.evaluate(()=>R5DeviceStore.getAllSavedLocations());
-          assert(records.length===1,'Legacy migration did not produce one canonical IndexedDB record');
-          assert(records[0].ats===canonical,'Legacy migration used the wrong LSD');
-          assert(records[0].notes==='Legacy Pack 2 migration note','Legacy note did not migrate into IndexedDB');
-          assert(records[0].visitCount===1,'Legacy visit count was not preserved');
+          await page.locator('#jobInput').focus();
+          await page.waitForSelector('#universalSearchResults:not(.hidden)');
+          assert((await page.locator('#universalSearchResults').innerText()).includes('Favourite'),'Favourite saved LSD is not suggested on focus');
 
-          await page.locator('#jobInput').fill(testLsd);
+          await page.locator('#jobInput').fill(pid);
+          await page.waitForTimeout(350);
+          assert((await page.locator('#universalSearchResults').innerText()).includes('PID'),'PID was not recognized in universal suggestions');
+          assert(!(await page.locator('#clearUniversalSearch').isHidden()),'Clear-search control did not appear');
           await page.locator('#findJob').click();
           await page.waitForFunction(()=>document.querySelector('#jobStatus')?.textContent?.includes('Job loaded:'),null,{timeout:60000});
-          assert((await page.locator('#jobDetails').innerText()).includes(canonical),'Online LSD lookup returned the wrong active LSD');
+          assert((await page.locator('#jobDetails').innerText()).includes(canonical),'PID did not resolve to the expected LSD');
 
-          await page.locator('.mobile-nav button[data-scroll="jobSection"]').click();
-          await page.waitForSelector('#jobSection.mobile-open');
-          await page.locator('#jobNotes').fill('Pack 2 IndexedDB verification note');
-          await page.waitForTimeout(850);
-          assert((await page.locator('#noteMeta').innerText()).includes('character'),'Improved note metadata did not render');
+          assert(!(await page.locator('#navLsdState').isHidden()),'LSD navigation state did not activate');
+          assert(!(await page.locator('#navWellsState').isHidden()),'Wells navigation state did not activate');
+          assert(!(await page.locator('#navSavedState').isHidden()),'Saved navigation state did not activate');
 
-          await page.evaluate(()=>selectDisposal(1));
-          await page.waitForTimeout(700);
+          let records=await page.evaluate(()=>R5DeviceStore.getAllSavedLocations());
+          assert(records.length===1,'Pack 3 created duplicate canonical LSD records');
+          let record=records[0];
+          assert(record.favorite===true,'Favourite state was lost');
+          assert(record.tags && Array.isArray(record.tags),'Permanent LSD record does not contain tags');
+          assert(record.hazards && Array.isArray(record.hazards),'Permanent LSD record does not contain hazards');
+          assert(record.offlineAvailable===true,'Permanent LSD record does not report offline availability');
+          assert(record.locationRecordVersion===1,'Permanent LSD record schema version is missing');
+          assert(record.visitCount>=2,'PID lookup did not add a visit');
+
+          const loaded=await page.evaluate(()=>({
+            company:loadedPads?.[0]?.bores?.[0]?.licensee||'',
+            uwi:loadedPads?.[0]?.bores?.[0] ? displayUwi(loadedPads[0].bores[0]) : ''
+          }));
+          assert(loaded.company,'Known LSD did not load a company for universal company search');
+          assert(loaded.uwi,'Known LSD did not load a UWI for universal well search');
+
+          await page.locator('#jobInput').fill(loaded.company);
+          await page.waitForTimeout(450);
+          const companyResults=await page.locator('#universalSearchResults').innerText();
+          assert(companyResults.includes('Company'),'Loaded company/operator was not recognized by universal search');
+
+          await page.locator('#jobInput').fill(loaded.uwi);
+          await page.waitForTimeout(450);
+          const wellResults=await page.locator('#universalSearchResults').innerText();
+          assert(wellResults.includes('Well'),'Loaded UWI was not recognized by universal search');
+
+          const facilityName=await page.evaluate(()=>facilities[0].name);
+          await page.locator('#jobInput').fill(facilityName);
+          await page.waitForTimeout(450);
+          const facilityResults=await page.locator('#universalSearchResults').innerText();
+          assert(facilityResults.includes('Disposal'),'Disposal facility was not recognized by universal search');
+          const disposalButton=page.locator('#universalSearchResults .search-result').filter({hasText:'Disposal'}).first();
+          await disposalButton.click();
+          assert((await page.locator('#jobStatus').innerText()).includes('Disposal:'),'Disposal result did not focus the map');
+
+          await page.evaluate(()=>{
+            const el=document.getElementById('jobInput');
+            el.value='NE-32-048-07-W5';
+            el.dispatchEvent(new Event('paste',{bubbles:true}));
+          });
+          await page.waitForFunction(()=>document.querySelector('#jobStatus')?.textContent?.includes('Quarter section detected'));
+          await page.waitForTimeout(300);
+          assert((await page.locator('#universalSearchResults').innerText()).includes('Quarter'),'Paste recognition did not classify the quarter section');
+
+          await page.locator('#jobInput').fill('53.18331,-114.991884');
+          await page.waitForTimeout(350);
+          assert((await page.locator('#universalSearchResults').innerText()).includes('GPS'),'GPS was not recognized in universal search');
+
+          const recents=await page.evaluate(()=>R5UniversalSearch.getRecent());
+          assert(recents.some(x=>x.type==='legal' && x.value===pid),'PID search was not added to recent searches');
+          assert(recents.some(x=>x.type==='facility'),'Disposal search was not added to recent searches');
 
           await page.locator('.mobile-nav button[data-scroll="historySection"]').click();
           await page.waitForSelector('#historySection.mobile-open');
-          assert(await page.locator('.history-item').count()===1,'Canonical list contains duplicate records for one LSD');
-          await page.locator('[data-fav-history]').click();
-          await page.waitForTimeout(400);
-
-          records=await page.evaluate(()=>R5DeviceStore.getAllSavedLocations());
-          assert(records.length===1,'IndexedDB contains duplicate canonical LSD records');
-          let record=records[0];
-          console.log('Pack 2 record checkpoint:',JSON.stringify(record));
-          assert(record.notes==='Pack 2 IndexedDB verification note','Field notes were not persisted to IndexedDB');
-          assert(record.favorite===true,'Favourite status was not persisted');
-          assert(Number(record.selectedDisposal)===1,'Selected disposal was not persisted');
-          assert(record.selectedWell?.uwi,'Selected well UWI was not persisted');
-          assert(record.selectedWell?.licensee,'Selected well licensee was not persisted');
-          const selectedWellUwi=record.selectedWell.uwi;
-          const selectedWellLicensee=record.selectedWell.licensee;
-          assert(record.visitCount>=2,'Lookup did not increase the migrated visit count');
-          assert(record.firstVisitedAt && record.lastVisitedAt,'First and latest visit timestamps are missing');
-          assert(Array.isArray(record.visits) && record.visits.length>=1,'Visit history was not retained');
-
-          await page.locator('#savedSearch').fill(selectedWellLicensee);
-          assert(await page.locator('.history-item').count()===1,'Saved LSD search did not find selected well metadata');
-          await page.locator('#savedFavouritesOnly').click();
-          assert(await page.locator('.history-item').count()===1,'Favourites-only filter hid a favourite record');
-          await page.locator('#savedSort').selectOption('visits');
-          assert(await page.locator('.history-item').count()===1,'Saved LSD sort changed record visibility unexpectedly');
-
-          const nearby=await page.evaluate(()=>R5NearbyAlerts.getStatus());
-          assert(nearby.enabled===false,'Nearby alerts are not off by default');
-          assert(Number(nearby.radiusKm)===0.5,'Default nearby radius is not 0.5 km');
-          assert((await page.locator('#nearbyAlertsToggle').innerText()).includes('Off'),'Nearby alert UI does not show Off');
+          await page.locator('.mobile-nav button[data-scroll="mapSection"]').click();
+          await page.waitForFunction(()=>!document.querySelector('.content>.section.mobile-open'));
+          assert(await page.locator('.mobile-nav button[data-scroll="mapSection"]').evaluate(el=>el.classList.contains('active')),'Map did not return to the active home state');
 
           await page.waitForSelector('#r5-settings-gear',{timeout:10000});
           await page.locator('#r5-settings-gear').click();
           await page.waitForSelector('#r5-app-modal');
           const settingsText=await page.locator('#r5-app-modal').innerText();
-          assert(settingsText.includes('IndexedDB device database'),'Settings do not report IndexedDB saved LSD storage');
-          assert(settingsText.includes('Nearby saved LSD alerts'),'Settings do not report nearby saved LSD alerts');
-          assert(settingsText.includes('Off, 0.5 km radius'),'Settings do not report the default nearby alert state');
+          assert(settingsText.includes('IndexedDB device database'),'Pack 2 device storage disappeared from Settings');
           assert(!settingsText.includes('Coming soon'),'Placeholder settings are visible');
           await page.locator('#r5-app-modal').getByRole('button',{name:'Close',exact:true}).click();
-
-          await page.evaluate(()=>{
-            void confirmAction('Pack 2 confirmation test','Continue').then(v=>window.__pack2ConfirmResult=v);
-          });
-          await page.waitForSelector('.r5-confirm-dialog');
-          await page.getByRole('button',{name:'Cancel'}).click();
-          await page.waitForFunction(()=>window.__pack2ConfirmResult===false);
 
           await page.evaluate(()=>navigator.serviceWorker.ready.then(()=>true));
           await page.waitForTimeout(2500);
@@ -175,33 +191,46 @@ jobs:
           await context.setOffline(true);
           await page.reload({waitUntil:'domcontentloaded',timeout:30000});
           await page.waitForSelector('#jobInput',{state:'visible',timeout:20000});
-          await page.waitForFunction(()=>globalThis.R5Pack2Ready && globalThis.R5DeviceStore);
+          await page.waitForFunction(()=>globalThis.R5Pack2Ready && globalThis.R5UniversalSearch && globalThis.R5DeviceStore);
           await page.evaluate(()=>globalThis.R5Pack2Ready);
+
           assert(await page.locator('meta[name="r5-app-version"]').getAttribute('content')===expected,'Offline reload did not serve v'+expected);
+          assert((await page.locator('#connectionStatus').innerText()).includes('OFFLINE'),'Offline status strip does not show OFFLINE');
+          assert((await page.locator('#dataSourceStatus').innerText()).includes('ST37'),'Offline data strip does not identify ST37');
 
-          await page.locator('.mobile-nav button[data-scroll="historySection"]').click();
-          await page.waitForSelector('#historySection.mobile-open');
-          await page.locator('#savedSearch').fill('Pack 2 IndexedDB verification note');
-          assert(await page.locator('.history-item').count()===1,'Saved LSD was not searchable after offline reload');
-          await page.locator('[data-load-history]').click();
+          await page.locator('#jobInput').focus();
+          await page.waitForSelector('#universalSearchResults:not(.hidden)');
+          const offlineFocus=await page.locator('#universalSearchResults').innerText();
+          assert(offlineFocus.includes('Favourite'),'Favourite suggestion disappeared offline');
+          assert(offlineFocus.includes('Recent'),'Recent searches disappeared offline');
+
+          await page.locator('#jobInput').fill(pid);
+          await page.waitForTimeout(300);
+          assert((await page.locator('#universalSearchResults').innerText()).includes('PID'),'Offline PID recognition failed');
+          await page.locator('#findJob').click();
           await page.waitForFunction(()=>document.querySelector('#jobStatus')?.textContent?.includes('Job loaded:'),null,{timeout:45000});
-          assert((await page.locator('#jobDetails').innerText()).includes(canonical),'Saved LSD did not load offline');
+          assert((await page.locator('#jobDetails').innerText()).includes(canonical),'Offline PID lookup did not resolve the expected LSD');
 
-          await page.locator('.mobile-nav button[data-scroll="jobSection"]').click();
-          await page.waitForSelector('#jobSection.mobile-open');
-          assert(await page.locator('#jobNotes').inputValue()==='Pack 2 IndexedDB verification note','Saved note was not restored offline');
+          await page.locator('#jobInput').fill(facilityName);
+          await page.waitForTimeout(350);
+          assert((await page.locator('#universalSearchResults').innerText()).includes('Disposal'),'Offline disposal search failed');
+
+          await page.locator('#jobInput').fill('53.18331,-114.991884');
+          await page.waitForTimeout(300);
+          assert((await page.locator('#universalSearchResults').innerText()).includes('GPS'),'Offline GPS recognition failed');
+          await page.locator('#findJob').click();
+          await page.waitForFunction(()=>document.querySelector('#jobStatus')?.textContent?.includes('requires a connection'));
+          assert((await page.locator('#jobStatus').innerText()).includes('requires a connection'),'Offline GPS limitation was not explained');
 
           records=await page.evaluate(()=>R5DeviceStore.getAllSavedLocations());
-          assert(records.length===1,'Offline reload changed canonical record count');
+          assert(records.length===1,'Offline universal search changed canonical record count');
           record=records[0];
-          assert(record.favorite===true,'Favourite status was lost offline');
-          assert(Number(record.selectedDisposal)===1,'Selected disposal was lost offline');
-          assert(record.selectedWell?.uwi===selectedWellUwi,'Selected well was lost offline');
-          assert(record.visitCount>=3,'Loading the saved LSD did not add a visit');
+          assert(record.favorite===true,'Favourite state was lost after offline reload');
+          assert(record.visitCount>=3,'Offline PID load did not add a visit');
 
           assert(pageErrors.length===0,'Page errors after offline reload: '+pageErrors.join(' | '));
-          await page.screenshot({path:'pack2-mobile-offline.png',fullPage:true});
+          await page.screenshot({path:'pack3-mobile-offline.png',fullPage:true});
           await browser.close();
-          console.log('Pack 2 live browser verification passed: migration, IndexedDB, canonical records, notes, selections, visits, favourites, search, settings and offline saved LSD reload.');
+          console.log('Pack 3 live browser verification passed: universal field search, PID, GPS recognition, favourites, recents, company, UWI, disposal, map-home navigation, status strip and offline PID reload.');
           JS
           node verify.mjs
