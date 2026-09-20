@@ -31,7 +31,7 @@ jobs:
           import { chromium } from 'playwright';
 
           const base='https://dothecoolwip1.github.io/r5-atlas/testing/';
-          const expected='0.8.0';
+          const expected='0.8.1';
           const testLsd='06-32-048-07-W5';
           const canonical='06-32-048-07 W5M';
           const legacyKey='albertaOilfieldFieldMapHistoryV15';
@@ -94,7 +94,7 @@ jobs:
           await page.waitForFunction(()=>globalThis.R5Pack2Ready && globalThis.R5DeviceStore);
           await page.evaluate(()=>globalThis.R5Pack2Ready);
 
-          assert((await page.locator('.data-pill').innerText()).includes('0.8.0'),'Visible version is not v0.8.0');
+          assert((await page.locator('.data-pill').innerText()).includes('0.8.1'),'Visible version is not v0.8.1');
           assert((await page.locator('.well-radius.active').innerText()).trim()==='0.5 km','Default well radius is not 0.5 km');
           assert(await page.locator('.facility').count()>0,'Disposal directory did not render');
 
