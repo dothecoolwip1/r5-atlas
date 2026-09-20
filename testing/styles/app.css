@@ -631,3 +631,164 @@ body.field-mode .leaflet-control-zoom a{width:48px!important;height:48px!importa
 @media(max-width:720px){
   .universal-results{z-index:1800!important}
 }
+
+
+/* ===== Mobile Wells sheet refinement ===== */
+@media(max-width:720px){
+  #wellsPanel.mobile-open{
+    left:8px;right:8px;bottom:64px;
+    max-height:80svh;
+    border-radius:20px 20px 14px 14px;
+    overflow:auto;
+    overscroll-behavior:contain;
+    background:#f5f8fa;
+  }
+  #wellsPanel .mobile-sheet-head{
+    padding:10px 12px;
+    min-height:54px;
+    background:rgba(255,255,255,.98);
+  }
+  #wellsPanel .mobile-sheet-head b{
+    font-size:15px;
+    letter-spacing:-.01em;
+  }
+  #wellsPanel .mobile-sheet-head button{
+    width:40px;height:40px;min-height:40px;
+    background:#eef2f4;
+    color:#304957;
+    font-size:19px;
+  }
+  #wellsPanel .well-toolbar{
+    padding:10px 12px 9px;
+    background:#f8fafb;
+    border-bottom:1px solid #dbe4e8;
+  }
+  #wellsPanel .v21-control-label{
+    margin:0 0 6px;
+    font-size:9px;
+    letter-spacing:.12em;
+    font-weight:950;
+    color:#6d7f89;
+  }
+  #wellsPanel .v21-radius-row{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:6px;
+    margin:0;
+  }
+  #wellsPanel .v21-radius-row .well-radius{
+    min-width:0;
+    width:100%;
+    min-height:42px;
+    padding:0 6px;
+    border:1px solid #d4dee4;
+    border-radius:11px;
+    background:#fff;
+    color:#304956;
+    box-shadow:none;
+    font-size:10.5px;
+    font-weight:900;
+  }
+  #wellsPanel .v21-radius-row .well-radius.active{
+    background:#174b66;
+    border-color:#174b66;
+    color:#fff;
+    box-shadow:0 3px 9px rgba(23,75,102,.18);
+  }
+  #wellsPanel .v21-radius-row .v21-lsd-chip{
+    background:#eef3f6;
+  }
+  #wellsPanel .v21-radius-row .v21-lsd-chip.active{
+    background:#174b66;
+  }
+  #wellsPanel .well-search-wrap{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 58px;
+    gap:6px;
+    margin-top:8px;
+    align-items:center;
+  }
+  #wellsPanel #wellSearch{
+    grid-column:1;
+    width:100%;
+    min-width:0;
+    height:42px;
+    min-height:42px;
+    padding:0 10px;
+    border:1px solid #d3dde3;
+    border-radius:11px;
+    background:#fff;
+    font-size:12px;
+  }
+  #wellsPanel #clearWellSearch{
+    grid-column:2;
+    height:42px;
+    min-height:42px;
+    padding:0 8px;
+    border-radius:11px;
+    font-size:10px;
+  }
+  #wellsPanel #hideWells{
+    grid-column:1 / -1;
+    justify-self:end;
+    width:auto;
+    min-width:92px;
+    height:34px;
+    min-height:34px;
+    margin-top:0;
+    padding:0 11px;
+    border:1px solid #d4dee4;
+    border-radius:10px;
+    background:#edf2f5;
+    color:#3d5562;
+    font-size:9.5px;
+  }
+  #wellsPanel #wellStatus{
+    margin-top:7px;
+    padding:7px 9px;
+    min-height:0;
+    border:0;
+    border-radius:9px;
+    background:#edf7f1;
+    color:#2e6b50;
+    font-size:9.5px;
+    line-height:1.25;
+  }
+  #wellsPanel #wellStatus.error{
+    background:#fff1f1;
+    color:#8e3b3b;
+  }
+  #wellsPanel .well-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+    padding:8px 10px 12px;
+    background:#f5f8fa;
+  }
+  #wellsPanel .well-card{
+    margin:0;
+    border:1px solid #d9e2e7;
+    border-radius:13px;
+    box-shadow:none;
+    background:#fff;
+  }
+  #wellsPanel .well-body{padding:10px 11px}
+  #wellsPanel .well-section-label{font-size:8.5px;letter-spacing:.1em}
+  #wellsPanel .well-surface-value{font-size:15px}
+  #wellsPanel .well-meta{font-size:9.5px}
+  #wellsPanel .well-name{font-size:12.5px}
+  #wellsPanel .well-lines{font-size:10px;line-height:1.45}
+  #wellsPanel .well-card .actions{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:5px;
+    margin-top:8px;
+  }
+  #wellsPanel .well-card .actions button,
+  #wellsPanel .well-card .actions a{
+    min-height:38px;
+    padding:0 6px;
+    border-radius:9px;
+    font-size:9px;
+  }
+}
