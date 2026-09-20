@@ -512,11 +512,15 @@ body.field-mode .leaflet-control-zoom a{width:48px!important;height:48px!importa
   }
   .map-search .primary-btn{height:44px;min-height:44px;padding:0 9px;border-radius:10px;font-size:13px}
   .search-clear{width:36px;height:44px;min-height:44px;border-radius:10px;font-size:18px}
-  .map-status{
+  .map-status,.map-status.ok{
     display:none;padding:5px 6px 0;font-size:9.5px;line-height:1.2;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis
   }
-  .map-status.ok,.map-status.error{display:block}
+  .map-status.error{
+    display:block;position:absolute;top:calc(100% + 50px);left:0;right:52px;
+    padding:7px 9px;border:1px solid #e0aaaa;border-radius:10px;background:rgba(255,245,245,.97);
+    box-shadow:0 4px 12px rgba(72,20,20,.12);white-space:normal;z-index:5
+  }
   .field-status-strip{height:25px;padding:4px 1px 0;gap:4px;overflow:hidden}
   .field-status-chip{
     min-height:20px!important;height:20px;padding:2px 6px;border-radius:999px;
@@ -604,7 +608,9 @@ body.field-mode .leaflet-control-zoom a{width:48px!important;height:48px!importa
   body.field-mode .topbar{background:#0d3042}
   body.field-mode .map-shell{border:1px solid #9fb0b9;box-shadow:none}
   body.field-mode .map-search{border:1px solid #9caeb8;box-shadow:0 5px 16px rgba(18,43,57,.14)}
-  body.field-mode .map-search input{height:46px;font-size:14px;border-width:1px}
+  body.field-mode .map-search input{height:48px;font-size:14px;border-width:1px}
+  body.field-mode .map-search .primary-btn{height:48px;min-height:48px}
+  body.field-mode .search-clear{height:48px;min-height:48px}
   body.field-mode .field-status-chip{min-height:20px!important;height:20px;border:0}
   body.field-mode .map-filter-dock-v20{width:auto}
   body.field-mode .map-filter-dock-v20 .filter-chip{
