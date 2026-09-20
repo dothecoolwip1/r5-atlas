@@ -300,7 +300,7 @@ body{background:var(--v21-bg)}
   --r5-field-border:#97a8b2;
 }
 .topbar-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0}
-.field-mode-toggle{min-height:40px;border:1px solid rgba(255,255,255,.42);border-radius:11px;background:rgba(255,255,255,.12);color:#fff;padding:0 11px;font-size:10px;font-weight:950;letter-spacing:.02em;white-space:nowrap}
+.field-mode-toggle{min-height:44px;border:1px solid rgba(255,255,255,.42);border-radius:11px;background:rgba(255,255,255,.12);color:#fff;padding:0 11px;font-size:10px;font-weight:950;letter-spacing:.02em;white-space:nowrap}
 .field-mode-toggle[aria-pressed="true"]{background:#fff;color:#102b3a;border-color:#fff}
 button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,[tabindex]:focus-visible{
   outline:3px solid var(--r5-focus)!important;
@@ -447,7 +447,7 @@ body.field-mode .leaflet-control-zoom a{width:48px!important;height:48px!importa
 /* Mobile field ergonomics */
 @media(max-width:720px){
   .topbar-actions{gap:5px}
-  .field-mode-toggle{min-height:36px;padding:0 8px;font-size:9px}
+  .field-mode-toggle{min-height:44px;padding:0 8px;font-size:9px}
   .data-pill{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .filter-chip::after{font-size:7px;padding:2px 4px}
   .map-filter-dock-v20 .filter-chip{min-height:46px}
