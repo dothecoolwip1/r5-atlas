@@ -53,6 +53,10 @@ export interface SavedLsdRecord {
   notes: string;
   notesUpdatedAt: string;
   favorite: boolean;
+  tags: string[];
+  hazards: string[];
+  offlineAvailable: boolean;
+  locationRecordVersion: number;
   selectedDisposal: number | null;
   selectedWell: SavedWellSelection | null;
   firstVisitedAt: string;
@@ -71,4 +75,23 @@ export interface SavedLocationStore {
   delete(key: string): Promise<void>;
   clear(): Promise<void>;
   count(): Promise<number>;
+}
+
+
+export type UniversalSearchKind = 'legal' | 'saved' | 'well' | 'company' | 'facility' | 'recent';
+
+export interface UniversalSearchResult {
+  type: UniversalSearchKind;
+  key: string;
+  label: string;
+  value: string;
+  subtitle: string;
+  score: number;
+  payload?: Record<string, unknown> | null;
+}
+
+export interface FieldStatus {
+  online: boolean;
+  dataSource: 'aer-live' | 'st37-cache';
+  gpsPermission: 'granted' | 'prompt' | 'denied' | 'unavailable' | 'unknown';
 }
