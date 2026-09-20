@@ -98,6 +98,8 @@ jobs:
               'PID recognition':'parsePid',
               'online AER universal search':'searchAerOnline',
               'offline ST37 universal search':'searchSt37Offline',
+              'truthful ST37 cache state':'st37Cached',
+              'uncached offline data state':'DEVICE DATA',
               'canonical IndexedDB saved entity search':'savedDeviceEntitySuggestions',
               'UWI normalization':'compactSearchToken',
               'recent searches':'r5-atlas-universal-search-recent-v1',
