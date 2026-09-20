@@ -4,6 +4,10 @@ on:
   push:
     paths:
       - '.github/workflows/check-testing-js.yml'
+      - 'testing/index.html'
+      - 'testing/app-update.js'
+      - 'testing/lsd-converter.js'
+      - 'testing/lsd-converter-v2.js'
 
 permissions:
   contents: read
