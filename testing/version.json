@@ -1,5 +1,5 @@
 {
-  "version": "0.10.2",
+  "version": "0.10.3",
   "releasedAt": "2026-09-20",
   "title": "Pack 4 mobile UI correction",
   "notes": [
@@ -13,6 +13,7 @@
     "Increased low-zoom disposal clustering so the Alberta overview is not covered in individual pins.",
     "Hid the Clear Job map action until an active job exists.",
     "Made the map fill the available phone viewport down to a simpler edge-to-edge bottom navigation bar.",
-    "Preserved the Pack 4 accessibility, tablet landscape and desktop three-panel behavior and all Pack 1 through Pack 3 data and offline functionality."
+    "Preserved the Pack 4 accessibility, tablet landscape and desktop three-panel behavior and all Pack 1 through Pack 3 data and offline functionality.",
+    "Kept the corrected top-right Settings control at the 44 px minimum field touch target."
   ]
 }
