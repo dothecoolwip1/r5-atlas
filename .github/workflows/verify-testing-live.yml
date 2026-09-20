@@ -31,7 +31,7 @@ jobs:
           import { chromium } from 'playwright';
 
           const base='https://dothecoolwip1.github.io/r5-atlas/testing/';
-          const expected='0.10.5';
+          const expected='0.10.6';
           const pid='5070483206';
           const canonical='06-32-048-07 W5M';
           const legacyKey='albertaOilfieldFieldMapHistoryV15';
@@ -117,8 +117,8 @@ jobs:
               fieldToggle:getComputedStyle(document.getElementById('fieldModeToggle')).display,
               gearParent:document.getElementById('r5-settings-gear').parentElement?.className||'',
               gearWidth:gear.width,gearHeight:gear.height,gearRight:gear.right,viewportWidth:innerWidth,
-              searchHeight:search.height,
-              dockHeight:dock.height,dockWidth:dock.width,
+              searchHeight:search.height,searchBottom:search.bottom,
+              dockTop:dock.top,dockHeight:dock.height,dockWidth:dock.width,
               filterTopSpread:Math.max(...filterTops)-Math.min(...filterTops),
               mapHeight:mapBox.height,mapBottom:mapBox.bottom,navTop:nav.top,
               clearJobDisplay:getComputedStyle(document.getElementById('clearJob')).display,
@@ -132,6 +132,7 @@ jobs:
           assert(mobileUi.gearRight>=mobileUi.viewportWidth-60,'Settings gear is not aligned to the right side of the phone header');
           assert(mobileUi.searchHeight<90,'Mobile search surface is still oversized');
           assert(mobileUi.dockHeight<=46 && mobileUi.dockWidth>300 && mobileUi.filterTopSpread<3,'Disposal filters are not one compact horizontal row');
+          assert(mobileUi.dockTop>=mobileUi.searchBottom+4,'Disposal filters are above or overlapping the mobile search surface');
           assert(mobileUi.mapHeight>700 && Math.abs(mobileUi.mapBottom-mobileUi.navTop)<=8,'Map does not fill the phone viewport down to navigation');
           assert(mobileUi.clearJobDisplay==='none','Clear Job is visible before a job exists');
           assert(mobileUi.defaultStatusDisplay==='none','Default instructional status still inflates the mobile search card');
@@ -190,6 +191,16 @@ jobs:
             return R5UniversalSearch.getResults();
           },facilityName);
           assert(facilityResults.some(x=>x.type==='facility'),'Disposal facility was not recognized by universal search');
+          const searchLayerState=await page.evaluate(()=>({
+            open:document.getElementById('mapSection').classList.contains('search-open'),
+            filterOpacity:getComputedStyle(document.getElementById('facilityCategoryFilters')).opacity,
+            filterPointerEvents:getComputedStyle(document.getElementById('facilityCategoryFilters')).pointerEvents,
+            searchZ:+getComputedStyle(document.querySelector('.map-search')).zIndex,
+            filterZ:+getComputedStyle(document.getElementById('facilityCategoryFilters')).zIndex
+          }));
+          assert(searchLayerState.open===true,'Mobile map did not enter search-open state for suggestions');
+          assert(searchLayerState.filterOpacity==='0' && searchLayerState.filterPointerEvents==='none','Disposal controls were not suppressed while search suggestions were open');
+          assert(searchLayerState.searchZ>searchLayerState.filterZ,'Search layer is not above the disposal filter layer');
           const disposalButton=page.locator('#universalSearchResults .search-result').filter({hasText:'Disposal'}).first();
           await disposalButton.click();
           assert((await page.locator('#jobStatus').innerText()).includes('Disposal:'),'Disposal result did not focus the map');
