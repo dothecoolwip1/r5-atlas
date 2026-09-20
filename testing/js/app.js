@@ -14,19 +14,64 @@ let wellMode={type:'radius',km:0.5};let wellsVisible=true,loadedPads=[];let well
 const map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([53.65,-114.4],5);L.control.zoom({position:'bottomright'}).addTo(map);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);L.control.scale({imperial:false}).addTo(map);
 const facilityMarkers=new Map();
+const markerClusterAvailable=typeof L.markerClusterGroup==='function';
+function makeClusterIcon(kind,count){
+  const label=kind==='well'?'W':'D';
+  return L.divIcon({className:'r5-cluster-host',html:`<div class="r5-cluster r5-cluster-${kind}" aria-hidden="true"><span>${count}</span><small>${label}</small></div>`,iconSize:[48,48],iconAnchor:[24,24]});
+}
+function createMarkerGroup(kind){
+  if(markerClusterAvailable)return L.markerClusterGroup({
+    maxClusterRadius:kind==='well'?48:54,
+    disableClusteringAtZoom:kind==='well'?15:14,
+    showCoverageOnHover:false,
+    spiderfyOnMaxZoom:true,
+    removeOutsideVisibleBounds:true,
+    chunkedLoading:true,
+    iconCreateFunction:cluster=>makeClusterIcon(kind,cluster.getChildCount())
+  });
+  return L.layerGroup();
+}
+const facilityClusterLayer=createMarkerGroup('disposal').addTo(map);
+const wellClusterLayer=createMarkerGroup('well').addTo(map);
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 const n2=n=>String(n).padStart(2,'0'),n3=n=>String(n).padStart(3,'0');
 function haversineKm(a,b,c,d){const R=6371.0088,toRad=x=>x*Math.PI/180;const x=toRad(c-a),y=toRad(d-b);const z=Math.sin(x/2)**2+Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(y/2)**2;return 2*R*Math.atan2(Math.sqrt(z),Math.sqrt(1-z));}
-function makeFacilityIcon(f){return L.divIcon({className:'',html:`<div class="number-marker ${f.c}"><span>${f.n}</span></div>`,iconSize:[36,36],iconAnchor:[18,34],popupAnchor:[0,-32]});}
-function makeJobIcon(){return L.divIcon({className:'',html:'<div class="job-marker">JOB</div>',iconSize:[44,44],iconAnchor:[22,22]});}
-function makeWellIcon(count){return L.divIcon({className:'',html:`<div class="well-marker">${count||'W'}</div>`,iconSize:[30,30],iconAnchor:[15,15]});}
-facilities.forEach(f=>{const m=L.marker([f.lat,f.lng],{icon:makeFacilityIcon(f)}).bindPopup(`<b>#${f.n} ${esc(f.name)}</b><br>${esc(f.place)}<br><b>Type:</b> ${esc(f.type)}<br><b>Hours:</b> ${esc(f.hours)}`);facilityMarkers.set(f.n,m);m.addTo(map);});
+function facilityGlyph(category){return category==='red'?'O':category==='blue'?'S':'C'}
+function makeFacilityIcon(f){return L.divIcon({className:'r5-marker-host',html:`<div class="r5-map-marker r5-marker-disposal r5-category-${f.c}" aria-hidden="true"><span class="r5-marker-glyph">${facilityGlyph(f.c)}</span><span class="r5-marker-number">${f.n}</span></div>`,iconSize:[44,50],iconAnchor:[22,48],popupAnchor:[0,-44]});}
+function makeJobIcon(){return L.divIcon({className:'r5-marker-host',html:'<div class="r5-map-marker r5-marker-lsd" aria-hidden="true"><span class="r5-marker-glyph">L</span><span class="r5-marker-tag">LSD</span></div>',iconSize:[50,50],iconAnchor:[25,25]});}
+function makeWellIcon(count){return L.divIcon({className:'r5-marker-host',html:`<div class="r5-map-marker r5-marker-well" aria-hidden="true"><span class="r5-marker-glyph">W</span><span class="r5-marker-count">${count||1}</span></div>`,iconSize:[42,42],iconAnchor:[21,21]});}
+function addClusterMarker(group,marker){if(!group.hasLayer(marker))group.addLayer(marker)}
+function removeClusterMarker(group,marker){if(group.hasLayer(marker))group.removeLayer(marker)}
+function focusFacilityMarker(fOrNumber,zoom=12){
+  const f=typeof fOrNumber==='object'?fOrNumber:facilities.find(x=>x.n===Number(fOrNumber));
+  if(!f)return;
+  const marker=facilityMarkers.get(f.n);
+  if(!marker)return;
+  addClusterMarker(facilityClusterLayer,marker);
+  const open=()=>marker.openPopup();
+  map.flyTo([f.lat,f.lng],Math.max(map.getZoom(),zoom));
+  if(typeof facilityClusterLayer.zoomToShowLayer==='function'){
+    setTimeout(()=>facilityClusterLayer.zoomToShowLayer(marker,open),320);
+  }else setTimeout(open,320);
+}
+facilities.forEach(f=>{
+  const markerLabel=`Disposal #${f.n}: ${f.name}, ${f.place}, ${categoryLabels[f.c]||f.type}`;
+  const m=L.marker([f.lat,f.lng],{icon:makeFacilityIcon(f),keyboard:true,title:markerLabel,alt:markerLabel,riseOnHover:true})
+    .bindPopup(`<div class="r5-map-popup"><strong>#${f.n} ${esc(f.name)}</strong><span>${esc(f.place)}</span><span>${esc(f.type)}</span><span>${esc(f.hours)}</span></div>`);
+  facilityMarkers.set(f.n,m);
+  addClusterMarker(facilityClusterLayer,m);
+});
+globalThis.R5MapUI=Object.freeze({
+  markerClusterAvailable,
+  focusFacility:focusFacilityMarker,
+  status:()=>({markerClusterAvailable,facilityCount:facilityClusterLayer.getLayers().length,wellCount:wellClusterLayer.getLayers().length})
+});
 function mapsSearch(lat,lng){return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
 function directions(originLat,originLng,destLat,destLng){return `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}`}
-function renderFacilities(){const q=(document.getElementById('directorySearch')?.value||'').toLowerCase().trim();const visible=facilities.filter(f=>activeCats[f.c]&&(!q||[f.n,f.name,f.phone,f.place,f.lsd,f.coords,f.type,f.hours].join(' ').toLowerCase().includes(q)));const set=new Set(visible.map(f=>f.n));facilities.forEach(f=>{const m=facilityMarkers.get(f.n);if(set.has(f.n)){if(!map.hasLayer(m))m.addTo(map)}else if(map.hasLayer(m))map.removeLayer(m)});document.getElementById('directoryStatus').textContent=`Showing ${visible.length} of ${facilities.length} facilities`;document.getElementById('facilityGrid').innerHTML=visible.map(f=>facilityCard(f)).join('')||'<div class="status">No facilities match the current disposal types.</div>';bindFacilityActions();syncChips();}
+function renderFacilities(){const q=(document.getElementById('directorySearch')?.value||'').toLowerCase().trim();const visible=facilities.filter(f=>activeCats[f.c]&&(!q||[f.n,f.name,f.phone,f.place,f.lsd,f.coords,f.type,f.hours].join(' ').toLowerCase().includes(q)));const set=new Set(visible.map(f=>f.n));facilities.forEach(f=>{const m=facilityMarkers.get(f.n);if(set.has(f.n))addClusterMarker(facilityClusterLayer,m);else removeClusterMarker(facilityClusterLayer,m)});document.getElementById('directoryStatus').textContent=`Showing ${visible.length} of ${facilities.length} facilities`;document.getElementById('facilityGrid').innerHTML=visible.map(f=>facilityCard(f)).join('')||'<div class="status">No facilities match the current disposal types.</div>';bindFacilityActions();syncChips();}
 function facilityCard(f){const r=routes.get(f.n);const drive=job?(r?`${(r.distance/1000).toFixed(1)} km • ${formatDuration(r.duration)}`:'Road route unavailable'):'';return `<article class="facility ${selectedDisposal===f.n?'sel':''}"><div class="facility-top"><div class="num ${f.c}">${f.n}</div><div class="facility-title"><b>${esc(f.name)}</b><span>${esc(f.place)}</span></div></div><div class="facility-body"><div><b>Phone:</b> ${esc(f.phone)}</div><div><b>LSD:</b> ${esc(f.lsd)}</div><div><b>Type:</b> ${esc(f.type)}</div><div><b>Hours:</b> ${esc(f.hours)}</div>${job?`<div><b>From job:</b> ${drive}</div>`:''}<div class="actions">${f.phone!=='N/A'?`<a href="tel:${f.phone.split('/')[0].replace(/[^0-9+]/g,'')}">Call</a>`:''}<a target="_blank" rel="noopener" href="${mapsSearch(f.lat,f.lng)}">Map</a><button data-zoom-fac="${f.n}">Zoom</button>${job?`<button data-select-fac="${f.n}">${selectedDisposal===f.n?'Selected':'Select disposal'}</button><a target="_blank" rel="noopener" href="${directions(job.lat,job.lng,f.lat,f.lng)}">Directions</a>`:''}</div></div></article>`}
-function bindFacilityActions(){document.querySelectorAll('[data-zoom-fac]').forEach(b=>b.onclick=()=>{const f=facilities.find(x=>x.n==b.dataset.zoomFac);map.flyTo([f.lat,f.lng],11);facilityMarkers.get(f.n).openPopup()});document.querySelectorAll('[data-select-fac]').forEach(b=>b.onclick=()=>selectDisposal(Number(b.dataset.selectFac)));}
-function syncChips(){document.querySelectorAll('#facilityCategoryFilters .filter-chip').forEach(b=>{const on=!!activeCats[b.dataset.cat];b.classList.toggle('off',!on);b.setAttribute('aria-pressed',String(on));});}
+function bindFacilityActions(){document.querySelectorAll('[data-zoom-fac]').forEach(b=>b.onclick=()=>focusFacilityMarker(Number(b.dataset.zoomFac),11));document.querySelectorAll('[data-select-fac]').forEach(b=>b.onclick=()=>selectDisposal(Number(b.dataset.selectFac)));}
+function syncChips(){document.querySelectorAll('#facilityCategoryFilters .filter-chip').forEach(b=>{const on=!!activeCats[b.dataset.cat];b.classList.toggle('off',!on);b.setAttribute('aria-pressed',String(on));b.dataset.stateLabel=on?'On':'Off';b.setAttribute('aria-label',`${categoryLabels[b.dataset.cat]||b.dataset.cat}: ${on?'shown':'hidden'}`);});}
 function formatDuration(sec){if(!Number.isFinite(sec))return 'n/a';const m=Math.round(sec/60);return m<60?`${m} min`:`${Math.floor(m/60)} h ${m%60} min`;}
 function parseJobInput(raw){
   raw=String(raw||'').trim();
@@ -219,8 +264,8 @@ async function ensureSt37(){
 }
 function candidateSurfaces(){if(!job)return[];let minLat,maxLat,minLng,maxLng;if(wellMode.type==='lsd'&&job.geometry?.rings?.[0]){const ring=job.geometry.rings[0];minLat=Math.min(...ring.map(x=>x[1]));maxLat=Math.max(...ring.map(x=>x[1]));minLng=Math.min(...ring.map(x=>x[0]));maxLng=Math.max(...ring.map(x=>x[0]));}else{const km=wellMode.km||2,dlat=km/111.2,dlng=km/(111.2*Math.cos(job.lat*Math.PI/180));minLat=job.lat-dlat;maxLat=job.lat+dlat;minLng=job.lng-dlng;maxLng=job.lng+dlng}const out=[];for(let a=Math.floor(minLat*10);a<=Math.floor(maxLat*10);a++)for(let c=Math.floor(minLng*10);c<=Math.floor(maxLng*10);c++){const rows=surfaceGrid.get(`${a}:${c}`)||[];rows.forEach(r=>{if(r[0]<minLat||r[0]>maxLat||r[1]<minLng||r[1]>maxLng)return;if(wellMode.type==='lsd'){if(!pointInJobPolygon(r[0],r[1]))return}else if(haversineKm(job.lat,job.lng,r[0],r[1])>wellMode.km)return;out.push({lat:r[0],lng:r[1],licence:r[2],licensee:r[3],status:r[4],statusDate:r[5],category:r[6],surfaceDls:r[7]||''})})}return out}
 function groupPads(surfaces){const m=new Map();surfaces.forEach(s=>{const key=`${s.lat.toFixed(6)}|${s.lng.toFixed(6)}`;let p=m.get(key);if(!p)m.set(key,p={key,lat:s.lat,lng:s.lng,surfaces:[],bores:[],distance:haversineKm(job.lat,job.lng,s.lat,s.lng),surfaceDls:s.surfaceDls||((wellMode.type==='lsd'&&pointInJobPolygon(s.lat,s.lng))?job.ats:'')});p.surfaces.push(s);const bs=boresByLicence.get(s.licence)||[];if(bs.length)bs.forEach(b=>p.bores.push({licence:s.licence,licensee:s.licensee,status:s.status,statusDate:s.statusDate,uwi:b[0]||'',rawUwi:b[1]||'',name:b[2]||'',tmd:Number.isFinite(b[3])&&b[3]>0?b[3]:null,tvd:Number.isFinite(b[4])&&b[4]>0?b[4]:null,bhLat:Number.isFinite(b[5])?b[5]:null,bhLng:Number.isFinite(b[6])?b[6]:null,type:b[10]||s.category||''}));else p.bores.push({licence:s.licence,licensee:s.licensee,status:s.status,statusDate:s.statusDate,uwi:'',rawUwi:'',name:`AER Licence ${s.licence}`,tmd:null,tvd:null,bhLat:null,bhLng:null,type:s.category||''})});return[...m.values()].sort((a,b)=>a.distance-b.distance)}
-function clearWellMarkers(){wellMarkers.forEach(m=>map.removeLayer(m));wellMarkers=[];loadedPads=[]}
-function clearWellMarkersOnly(){wellMarkers.forEach(m=>map.removeLayer(m));wellMarkers=[]}
+function clearWellMarkers(){wellClusterLayer.clearLayers();wellMarkers=[];loadedPads=[]}
+function clearWellMarkersOnly(){wellClusterLayer.clearLayers();wellMarkers=[]}
 function displayUwi(b){return b.uwi||b.rawUwi||'Not reported'}
 function displaySurfaceDls(v){return String(v||'').trim().replace(/\s+/g,'').replace(/W([456])M$/i,'W$1')}
 function depthText(v){return Number.isFinite(v)&&v>0?`${v.toLocaleString(undefined,{maximumFractionDigits:1})} m`:'Not reported'}
@@ -534,7 +579,7 @@ function renderWells(){
   const pads=loadedPads.filter(p=>!q||[...p.surfaces.map(s=>`${s.licence} ${s.licensee} ${s.status}`),...p.bores.map(b=>`${b.uwi} ${b.rawUwi} ${b.name} ${b.licence} ${b.licensee} ${b.status}`)].join(' ').toLowerCase().includes(q));
   document.getElementById('wellStatus').textContent=wellMode.type==='lsd'?`${loadedPads.length} surface location${loadedPads.length===1?'':'s'} start inside this LSD. ${pads.length} shown.`:`${loadedPads.length} surface locations loaded. ${pads.length} shown within ${wellMode.km} km.`;
   document.getElementById('wellStatus').className='status ok';
-  if(wellsVisible)pads.forEach(p=>{const m=L.marker([p.lat,p.lng],{icon:makeWellIcon(p.bores.length)}).addTo(map);m.on('click',()=>selectSurfacePad(p));wellMarkers.push(m)});
+  if(wellsVisible)pads.forEach(p=>{const first=p.bores?.[0]||{};const label=[displaySurfaceDls(p.surfaceDls)||'Surface well',first.licensee,displayUwi(first)].filter(Boolean).join(' • ');const m=L.marker([p.lat,p.lng],{icon:makeWellIcon(p.bores.length),keyboard:true,title:label,alt:label,riseOnHover:true});m.on('click',()=>selectSurfacePad(p));addClusterMarker(wellClusterLayer,m);wellMarkers.push(m)});
   document.getElementById('wellGrid').innerHTML=pads.slice(0,100).map((p,i)=>wellCard(p,i)).join('')+(pads.length>100?'<div class="status">Showing the nearest 100 surface locations. Use the search or a smaller radius.</div>':'');
   bindWellActions(pads);
   if(loadedPads.length&&!selectedSurfacePad){
@@ -701,7 +746,7 @@ function refreshAtsOverlay(){if(!atsOverlayOn)return;if(atsOverlay)map.removeLay
 function scheduleAtsOverlay(){clearTimeout(atsOverlayTimer);atsOverlayTimer=setTimeout(refreshAtsOverlay,280)}
 function toggleAtsOverlay(){atsOverlayOn=!atsOverlayOn;const b=document.getElementById('atsGridToggle');b.style.opacity=atsOverlayOn?'1':'.55';if(!atsOverlayOn&&atsOverlay){map.removeLayer(atsOverlay);atsOverlay=null}else refreshAtsOverlay();showToast(`ATS grid ${atsOverlayOn?'on':'off'}`)}
 
-document.getElementById('directorySearch').oninput=renderFacilities;document.getElementById('clearDirectorySearch').onclick=()=>{document.getElementById('directorySearch').value='';renderFacilities()};document.getElementById('fitFacilities').onclick=()=>{const ms=facilities.filter(f=>activeCats[f.c]).map(f=>facilityMarkers.get(f.n)).filter(m=>map.hasLayer(m));if(ms.length)map.fitBounds(L.featureGroup(ms).getBounds().pad(.1))};document.querySelectorAll('#facilityCategoryFilters .filter-chip').forEach(b=>b.onclick=()=>{activeCats[b.dataset.cat]=!activeCats[b.dataset.cat];renderFacilities();if(job)renderNearest()});
+document.getElementById('directorySearch').oninput=renderFacilities;document.getElementById('clearDirectorySearch').onclick=()=>{document.getElementById('directorySearch').value='';renderFacilities()};document.getElementById('fitFacilities').onclick=()=>{const ms=facilities.filter(f=>activeCats[f.c]).map(f=>facilityMarkers.get(f.n)).filter(m=>facilityClusterLayer.hasLayer(m));if(ms.length)map.fitBounds(L.featureGroup(ms).getBounds().pad(.1))};document.querySelectorAll('#facilityCategoryFilters .filter-chip').forEach(b=>b.onclick=()=>{activeCats[b.dataset.cat]=!activeCats[b.dataset.cat];renderFacilities();if(job)renderNearest()});
 document.getElementById('findJob').onclick=async()=>{const p=parseJobInput(document.getElementById('jobInput').value);document.getElementById('jobStatus').textContent='Looking up Alberta ATS...';try{currentHistoryId=null;document.getElementById('jobNotes').value='';setNoteSaveState('Saved','saved');await setJob(await performJobLookup(p))}catch(e){document.getElementById('jobStatus').textContent=e.message;document.getElementById('jobStatus').className='map-status error'}};document.getElementById('jobInput').onkeydown=e=>{if(e.key==='Enter')document.getElementById('findJob').click()};document.getElementById('myLocation').onclick=useCurrentLocation;document.getElementById('clearJob').onclick=clearJob;document.getElementById('jobNotes').oninput=queueNoteSave;document.getElementById('jobNotes').onblur=()=>saveJobHistory(true);document.getElementById('copyJob').onclick=async()=>{if(!job)return;const f=selectedDisposal?facilities.find(x=>x.n===selectedDisposal):null;const txt=`Job: ${job.ats}\nGPS: ${job.lat.toFixed(6)}, ${job.lng.toFixed(6)}${f?`\nDisposal: ${f.name}`:''}\nNotes: ${document.getElementById('jobNotes').value||''}`;await copyText(txt,'Job info copied')};document.getElementById('clearHistory').onclick=async()=>{if(await confirmAction('Clear all saved LSD history and saved notes?','Clear saved data')){history=[];notesStore={};R5Storage.removeItem(HISTORY_KEY);R5Storage.removeItem(NOTES_KEY);renderHistory()}};
 document.querySelectorAll('.well-radius').forEach(b=>b.onclick=()=>{document.querySelectorAll('.well-radius').forEach(x=>x.classList.remove('active'));b.classList.add('active');wellMode=b.dataset.mode==='lsd'?{type:'lsd'}:{type:'radius',km:+b.dataset.km};loadWells()});document.getElementById('hideWells').onclick=()=>{wellsVisible=!wellsVisible;document.getElementById('hideWells').textContent=wellsVisible?'Hide pins':'Show pins';renderWells()};document.getElementById('wellSearch').oninput=renderWells;document.getElementById('clearWellSearch').onclick=()=>{document.getElementById('wellSearch').value='';renderWells()};
 document.getElementById('companyClose').onclick=closeCompanyProfile;document.getElementById('companyMapClose').onclick=closeCompanyWellsMap;document.getElementById('companyMapBackdrop').onclick=e=>{if(e.target.id==='companyMapBackdrop')closeCompanyWellsMap()};document.getElementById('companyBackdrop').onclick=e=>{if(e.target.id==='companyBackdrop')closeCompanyProfile()};document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('companyBackdrop').classList.contains('hidden'))closeCompanyProfile()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('companyMapBackdrop').classList.contains('hidden'))closeCompanyWellsMap()});document.querySelectorAll('[data-scroll]').forEach(b=>b.onclick=()=>b.dataset.scroll==='mapSection'?closeMobileSheets():openMobileSheet(b.dataset.scroll));window.addEventListener('beforeunload',()=>{if(job)saveJobHistory(true)});
