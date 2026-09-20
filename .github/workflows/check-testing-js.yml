@@ -31,7 +31,7 @@ jobs:
           node --check testing/data/facilities.js
           node --check testing/app-update.js
           node --check testing/sw.js
-      - name: Enforce testing architecture and Pack 2 data model
+      - name: Enforce testing architecture through Pack 3
         shell: bash
         run: |
           python - <<'PY'
@@ -50,7 +50,8 @@ jobs:
               raise SystemExit('Duplicate function declarations remain: '+', '.join(dup))
           pack2=Path('testing/js/features/saved-locations.js').read_text(encoding='utf-8')
           device=Path('testing/js/core/device-store.js').read_text(encoding='utf-8')
-          text='\n'.join([html,app,pack2,device,Path('testing/app-update.js').read_text(encoding='utf-8')])
+          pack3=Path('testing/js/features/universal-search.js').read_text(encoding='utf-8')
+          text='\n'.join([html,app,pack2,device,pack3,Path('testing/app-update.js').read_text(encoding='utf-8')])
           forbidden=['raw.githubusercontent.com/dothecoolwip1/r5-atlas/71cbae','Coming soon']
           for token in forbidden:
               if token in text:
@@ -67,6 +68,7 @@ jobs:
               'testing/js/core/device-store.js',
               'testing/js/core/providers.js',
               'testing/js/features/saved-locations.js',
+              'testing/js/features/universal-search.js',
           ]
           for p in required:
               if not Path(p).exists():
@@ -80,17 +82,38 @@ jobs:
               'Saved LSD search':'id="savedSearch"',
               'Saved LSD sorting':'id="savedSort"',
               'nearby radius':'id="nearbyRadius"',
-              'Pack 2 version':'content="0.8.1"',
+              'Pack 3 version':'content="0.9.0"',
           }
           combined='\n'.join([html,pack2,device])
           for label,token in pack2_tokens.items():
               if token not in combined:
                   raise SystemExit(f'Pack 2 check failed, missing {label}: {token}')
+          pack3_tokens={
+              'universal search input':'aria-label="Universal field search"',
+              'search suggestions':'id="universalSearchResults"',
+              'clear universal search':'id="clearUniversalSearch"',
+              'connectivity status':'id="connectionStatus"',
+              'data source status':'id="dataSourceStatus"',
+              'GPS status':'id="gpsStatus"',
+              'PID recognition':'parsePid',
+              'online AER universal search':'searchAerOnline',
+              'offline ST37 universal search':'searchSt37Offline',
+              'recent searches':'r5-atlas-universal-search-recent-v1',
+              'favourite suggestions':'favorite',
+              'field navigation state':'navWellsState',
+              'location record tags':'tags:',
+              'location record hazards':'hazards:',
+              'offline availability':'offlineAvailable',
+          }
+          combined3='\n'.join([html,app,pack2,pack3])
+          for label,token in pack3_tokens.items():
+              if token not in combined3:
+                  raise SystemExit(f'Pack 3 check failed, missing {label}: {token}')
           sw=Path('testing/sw.js').read_text(encoding='utf-8')
-          for asset in ['./js/core/device-store.js','./js/features/saved-locations.js']:
+          for asset in ['./js/core/device-store.js','./js/features/saved-locations.js','./js/features/universal-search.js','./data/st37-meta.json']:
               if asset not in sw:
-                  raise SystemExit('Pack 2 offline runtime is not precached: '+asset)
-          print('Pack 1 architecture and Pack 2 data-model checks passed')
+                  raise SystemExit('Offline runtime is not precached: '+asset)
+          print('Pack 1, Pack 2 and Pack 3 architecture checks passed')
           PY
       - name: Check React and TypeScript migration workspace
         working-directory: app
