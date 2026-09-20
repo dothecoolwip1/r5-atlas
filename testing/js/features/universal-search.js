@@ -17,6 +17,7 @@
   let st37SurfaceByLicence=null;
   let st37MetaLabel='ST37 cached';
   let gpsPermission='unknown';
+  let st37CacheAvailable=false;
 
   function safeJson(key,fallback){
     try{return R5Storage.getJson(key,fallback)}catch(_){return fallback}
@@ -680,10 +681,36 @@
     setChip('gpsStatus','GPS READY','','Device location is available; permission is requested only when needed.');
   }
 
-  function updateConnectionStatus(){
+  async function detectSt37CacheAvailability(){
+    if(st37Ready){
+      st37CacheAvailable=true;
+      return true;
+    }
+    if(!('caches' in globalThis)){
+      st37CacheAvailable=false;
+      return false;
+    }
+    try{
+      const base=new URL('.',location.href);
+      const surfaceUrl=new URL('data/st37-surface.txt.gz',base).href;
+      const boreUrl=new URL('data/st37-bore.txt.gz',base).href;
+      const matched=await Promise.all([caches.match(surfaceUrl),caches.match(boreUrl)]);
+      st37CacheAvailable=!!(matched[0]&&matched[1]);
+    }catch(_){
+      st37CacheAvailable=false;
+    }
+    return st37CacheAvailable;
+  }
+
+  async function updateConnectionStatus(){
     if(navigator.onLine===false){
       setChip('connectionStatus','OFFLINE','warn','Network is unavailable. R5 Atlas is using device data and cached resources.');
-      setChip('dataSourceStatus',st37MetaLabel,'warn','Cached ST37 is a snapshot and is not implied to be current. Saved LSDs and the offline ATS pack remain device-local.');
+      const ready=await detectSt37CacheAvailability();
+      if(ready){
+        setChip('dataSourceStatus',st37MetaLabel,'warn','Cached ST37 is available on this device. It is a snapshot and is not implied to be current.');
+      }else{
+        setChip('dataSourceStatus','DEVICE DATA','warn','Saved LSDs and the offline ATS pack are available. The large ST37 well snapshot has not been cached on this device yet.');
+      }
     }else{
       setChip('connectionStatus','ONLINE','good','Network connection is available.');
       setChip('dataSourceStatus','AER LIVE','good','Live AER well data is primary while online. Cached ST37 remains fallback data.');
@@ -713,7 +740,14 @@
         if(id==='st37Status'){
           const text=el.textContent||'';
           if(/live aer/i.test(text)&&navigator.onLine!==false)setChip('dataSourceStatus','AER LIVE','good',text);
-          else if(/offline|st37/i.test(text))setChip('dataSourceStatus',st37MetaLabel,'warn',text+' Cached snapshot data may not be current.');
+          else if(/offline|st37/i.test(text)){
+            if(st37Ready){
+              st37CacheAvailable=true;
+              setChip('dataSourceStatus',st37MetaLabel,'warn',text+' Cached snapshot data may not be current.');
+            }else{
+              void updateConnectionStatus();
+            }
+          }
         }
         updateNavStates();
       }).observe(el,{childList:true,subtree:true,characterData:true,attributes:true});
@@ -763,7 +797,7 @@
     execute:executeSearch,
     getResults:function(){return results.map(function(x){return Object.assign({},x)})},
     getRecent:loadRecent,
-    status:function(){return{online:navigator.onLine!==false,gpsPermission:gpsPermission,data:navigator.onLine===false?st37MetaLabel:'AER LIVE'}}
+    status:function(){return{online:navigator.onLine!==false,gpsPermission:gpsPermission,data:navigator.onLine===false?(st37CacheAvailable?st37MetaLabel:'DEVICE DATA'):'AER LIVE',st37Cached:st37CacheAvailable}}
   });
 
   Promise.resolve(globalThis.R5Pack2Ready).catch(function(){}).then(function(){
