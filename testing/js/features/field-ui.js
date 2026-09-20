@@ -13,6 +13,8 @@
   const facilitiesSection=document.getElementById('facilitiesSection');
   const historySection=document.getElementById('historySection');
   const fieldModeToggle=document.getElementById('fieldModeToggle');
+  const clearJobButton=document.getElementById('clearJob');
+  const mapJobBar=document.getElementById('mapJobBar');
   if(!page||!mapSection||!content||!mapSearch)return;
 
   let desktopActive=false;
@@ -129,10 +131,21 @@
     });
   }
 
+  function syncMobileMapActions(){
+    if(!clearJobButton||!mapJobBar)return;
+    const hasActiveJob=!mapJobBar.classList.contains('hidden');
+    clearJobButton.classList.toggle('r5-map-action-hidden',!hasActiveJob);
+    clearJobButton.setAttribute('aria-hidden',String(!hasActiveJob));
+    clearJobButton.tabIndex=hasActiveJob?0:-1;
+  }
+
   const observer=new MutationObserver(function(mutations){
     if(mutations.some(function(m){return m.addedNodes&&m.addedNodes.length}))enhanceAccessibility();
+    if(mutations.some(function(m){return m.target===mapJobBar||m.type==='attributes'}))syncMobileMapActions();
   });
   observer.observe(document.body,{childList:true,subtree:true});
+  if(mapJobBar)observer.observe(mapJobBar,{attributes:true,attributeFilter:['class']});
+  syncMobileMapActions();
 
   document.addEventListener('keydown',function(event){
     if(event.key!=='Escape')return;
