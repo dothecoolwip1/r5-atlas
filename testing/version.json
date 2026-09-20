@@ -1,5 +1,5 @@
 {
-  "version": "0.10.3",
+  "version": "0.10.4",
   "releasedAt": "2026-09-20",
   "title": "Pack 4 mobile UI correction",
   "notes": [
@@ -14,6 +14,8 @@
     "Hid the Clear Job map action until an active job exists.",
     "Made the map fill the available phone viewport down to a simpler edge-to-edge bottom navigation bar.",
     "Preserved the Pack 4 accessibility, tablet landscape and desktop three-panel behavior and all Pack 1 through Pack 3 data and offline functionality.",
-    "Kept the corrected top-right Settings control at the 44 px minimum field touch target."
+    "Kept the corrected top-right Settings control at the 44 px minimum field touch target.",
+    "Kept normal success text out of the compact phone search card so loading a job cannot make the filter row collide with the search surface.",
+    "Field Mode now enlarges the compact phone search controls without returning to the oversized Pack 4 layout."
   ]
 }
