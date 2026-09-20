@@ -1,5 +1,5 @@
 {
-  "version": "0.10.7",
+  "version": "0.10.8",
   "releasedAt": "2026-09-20",
   "title": "Mobile Wells sheet and Android Back navigation",
   "notes": [
@@ -23,6 +23,7 @@
     "Rebuilt the phone Surface Wells sheet with a compact 3 by 2 radius grid instead of six oversized full-width buttons.",
     "Compressed the well filter controls and status area so actual surface-well results appear much sooner on screen.",
     "Added in-app mobile sheet history so Android Back or back-swipe closes the open LSD, Wells, Disposals or Saved sheet before normal browser/app navigation.",
-    "Switching between mobile sheets replaces the current sheet state instead of stacking duplicate Back presses."
+    "Switching between mobile sheets replaces the current sheet state instead of stacking duplicate Back presses.",
+    "Placed the Wells text filter, Clear and Hide pins controls on one 44 px row to remove the remaining excess toolbar height."
   ]
 }
