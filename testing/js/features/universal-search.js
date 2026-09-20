@@ -146,19 +146,30 @@
     const query=String(q||'').toLowerCase().trim();
     if(!query)return[];
     const out=[];
+    const companies=new Set();
     for(const p of loadedPads||[]){
       for(let i=0;i<(p.bores||[]).length;i++){
         const b=p.bores[i]||{};
+        const company=String(b.licensee||'').trim();
+        if(company&&company.toLowerCase().includes(query)&&!companies.has(company.toLowerCase())){
+          companies.add(company.toLowerCase());
+          out.push({
+            type:'company',key:'loaded-company:'+company.toLowerCase(),label:company,value:company,
+            subtitle:'Company from wells already loaded around the active location',tag:'Company',icon:'◉',score:104,
+            payload:{name:company}
+          });
+        }
         const hay=[b.uwi,b.rawUwi,b.name,b.licence,b.licensee,b.status,p.surfaceDls].filter(Boolean).join(' ').toLowerCase();
-        if(!hay.includes(query))continue;
-        out.push({
-          type:'well',key:'loaded:'+(b.uwi||b.rawUwi||b.licence)+'|'+p.lat+'|'+p.lng,
-          label:b.name||displayUwi(b),value:b.uwi||b.rawUwi||b.licence,
-          subtitle:[displayUwi(b),b.licensee,displaySurfaceDls(p.surfaceDls)].filter(Boolean).join(' • '),
-          tag:'Well',icon:'●',score:101,
-          payload:{uwi:displayUwi(b),licence:b.licence||'',licensee:b.licensee||'',surfaceDls:displaySurfaceDls(p.surfaceDls),lat:p.lat,lng:p.lng}
-        });
-        if(out.length>=5)return out;
+        if(hay.includes(query)){
+          out.push({
+            type:'well',key:'loaded:'+(b.uwi||b.rawUwi||b.licence)+'|'+p.lat+'|'+p.lng,
+            label:b.name||displayUwi(b),value:b.uwi||b.rawUwi||b.licence,
+            subtitle:[displayUwi(b),b.licensee,displaySurfaceDls(p.surfaceDls)].filter(Boolean).join(' • '),
+            tag:'Well',icon:'●',score:101,
+            payload:{uwi:displayUwi(b),licence:b.licence||'',licensee:b.licensee||'',surfaceDls:displaySurfaceDls(p.surfaceDls),lat:p.lat,lng:p.lng}
+          });
+        }
+        if(out.length>=7)return out;
       }
     }
     return out;
