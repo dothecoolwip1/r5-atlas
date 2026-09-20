@@ -27,7 +27,7 @@ jobs:
       - name: Verify deployed mobile PWA online and offline
         shell: bash
         run: |
-          cat > /tmp/verify.mjs <<'JS'
+          cat > verify.mjs <<'JS'
           import { chromium } from 'playwright';
 
           const base='https://dothecoolwip1.github.io/r5-atlas/testing/';
@@ -123,4 +123,4 @@ jobs:
           await browser.close();
           console.log('Pack 1 live browser verification passed: online UI, persistence, settings, custom dialogs, PWA offline reload, offline LSD lookup.');
           JS
-          node /tmp/verify.mjs
+          node verify.mjs
