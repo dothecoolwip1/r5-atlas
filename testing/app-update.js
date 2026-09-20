@@ -238,24 +238,24 @@
     const installedText = isStandalone() ? 'Installed app' : 'Web browser';
     const autoText = pref === 'yes' ? 'On' : pref === 'no' ? 'Off, notify first' : 'Not selected';
     const nearby = globalThis.R5NearbyAlerts?.getStatus?.() || { enabled: false, radiusKm: 0.5, watching: false };
-    const nearbyText = nearby.enabled ? \`On at \${nearby.radiusKm} km\` : \`Off, \${nearby.radiusKm} km radius\`;
+    const nearbyText = nearby.enabled ? `On at ${nearby.radiusKm} km` : `Off, ${nearby.radiusKm} km radius`;
     showModal(
       'Settings',
-      \`<p><strong>R5 Atlas v\${escapeHtml(BUILD_VERSION)}</strong></p><p class="r5-small">\${escapeHtml(installedText)}</p>
+      `<p><strong>R5 Atlas v${escapeHtml(BUILD_VERSION)}</strong></p><p class="r5-small">${escapeHtml(installedText)}</p>
        <div class="r5-settings-section">App</div>
        <div class="r5-settings-list">
-         <div class="r5-settings-row"><strong>Automatic updates</strong><span class="r5-live">\${escapeHtml(autoText)}</span></div>
-         <div class="r5-settings-row"><strong>Mode</strong><span>\${escapeHtml(installedText)}</span></div>
+         <div class="r5-settings-row"><strong>Automatic updates</strong><span class="r5-live">${escapeHtml(autoText)}</span></div>
+         <div class="r5-settings-row"><strong>Mode</strong><span>${escapeHtml(installedText)}</span></div>
          <div class="r5-settings-row"><strong>Offline LSD pack</strong><span class="r5-live">Bundled and cached</span></div>
          <div class="r5-settings-row"><strong>Saved LSD storage</strong><span class="r5-live">IndexedDB device database</span></div>
-         <div class="r5-settings-row"><strong>Nearby saved LSD alerts</strong><span class="\${nearby.enabled ? 'r5-live' : ''}">\${escapeHtml(nearbyText)}</span></div>
+         <div class="r5-settings-row"><strong>Nearby saved LSD alerts</strong><span class="${nearby.enabled ? 'r5-live' : ''}">${escapeHtml(nearbyText)}</span></div>
          <div class="r5-settings-row"><strong>Well fallback</strong><span>Cached on demand</span></div>
        </div>
        <div class="r5-settings-section">Version</div>
        <div class="r5-settings-list">
-         <div class="r5-settings-row"><strong>Installed build</strong><span>v\${escapeHtml(BUILD_VERSION)}</span></div>
-         <div class="r5-settings-row"><strong>Update policy</strong><span>\${pref === 'yes' ? 'Automatic' : pref === 'no' ? 'Notify first' : 'Choose below'}</span></div>
-       </div>\`,
+         <div class="r5-settings-row"><strong>Installed build</strong><span>v${escapeHtml(BUILD_VERSION)}</span></div>
+         <div class="r5-settings-row"><strong>Update policy</strong><span>${pref === 'yes' ? 'Automatic' : pref === 'no' ? 'Notify first' : 'Choose below'}</span></div>
+       </div>`,
       [
         ...(isStandalone() ? [] : [{ label: 'Install app', className: 'r5-primary', onClick: () => { closeModal(); installApp(); } }]),
         ...(globalThis.R5NearbyAlerts ? [{
