@@ -1,17 +1,18 @@
 {
-  "version": "0.10.1",
+  "version": "0.10.2",
   "releasedAt": "2026-09-20",
-  "title": "Pack 4 field map and responsive workspace",
+  "title": "Pack 4 mobile UI correction",
   "notes": [
-    "Redesigned LSD, well and disposal map markers with distinct shapes, letters and labels so marker meaning is not dependent on colour alone.",
-    "Added map clustering for disposal facilities and surface wells, with custom disposal and well cluster markers and offline-cached Leaflet marker-cluster support.",
-    "Added keyboard-focusable map markers with accessible titles, stronger focus states, meaningful well and disposal card labels and minimum 44 px interaction targets.",
-    "Improved default field contrast and added visible On/Off filter state labels for sunlight readability and non-colour-only status communication.",
-    "Added optional persistent Field Mode with larger controls, higher contrast, enlarged map markers and reduced visual clutter for outdoor use.",
-    "Added a tablet landscape split layout with the live map beside scrollable job, well, disposal and saved-location details.",
-    "Added a desktop three-panel workspace with Search and Saved on the left, the map in the centre and active location details on the right.",
-    "Added reduced-motion support and preserved the existing mobile bottom navigation and sheet interactions.",
-    "Preserved Pack 1 through Pack 3 lookup, offline, IndexedDB, saved-location and universal-search behavior.",
-    "Kept the Field Mode toggle at the same 44 px minimum touch-target standard on phones instead of allowing the top-bar control to shrink."
+    "Rebuilt the phone layout after field review to restore a clean map-first interface.",
+    "Fixed the Settings gear mounting in the wrong fallback position beside the logo and anchored it to the right side of the header.",
+    "Moved Field Mode control into Settings on phones while preserving the persistent Field Mode feature.",
+    "Removed the version/data pill and Field Mode button from the phone header to reduce clutter.",
+    "Made the universal search card compact and shortened the mobile search copy.",
+    "Changed disposal filters from a large vertical dock to one compact horizontal row with visible check and x state indicators.",
+    "Reduced the visual size of LSD, well, disposal and cluster markers while retaining their larger interaction hit areas.",
+    "Increased low-zoom disposal clustering so the Alberta overview is not covered in individual pins.",
+    "Hid the Clear Job map action until an active job exists.",
+    "Made the map fill the available phone viewport down to a simpler edge-to-edge bottom navigation bar.",
+    "Preserved the Pack 4 accessibility, tablet landscape and desktop three-panel behavior and all Pack 1 through Pack 3 data and offline functionality."
   ]
 }
