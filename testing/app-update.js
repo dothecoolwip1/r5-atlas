@@ -243,21 +243,14 @@
        <div class="r5-settings-section">App</div>
        <div class="r5-settings-list">
          <div class="r5-settings-row"><strong>Automatic updates</strong><span class="r5-live">${escapeHtml(autoText)}</span></div>
-         <div class="r5-settings-row"><strong>Offline data</strong><span>Coming soon</span></div>
-         <div class="r5-settings-row"><strong>Notifications</strong><span>Coming soon</span></div>
-         <div class="r5-settings-row"><strong>Appearance</strong><span>Coming soon</span></div>
+         <div class="r5-settings-row"><strong>Mode</strong><span>${escapeHtml(installedText)}</span></div>
+         <div class="r5-settings-row"><strong>Offline LSD pack</strong><span class="r5-live">Bundled and cached</span></div>
+         <div class="r5-settings-row"><strong>Well fallback</strong><span>Cached on demand</span></div>
        </div>
-       <div class="r5-settings-section">Map & device</div>
+       <div class="r5-settings-section">Version</div>
        <div class="r5-settings-list">
-         <div class="r5-settings-row"><strong>Map preferences</strong><span>Coming soon</span></div>
-         <div class="r5-settings-row"><strong>Location & GPS</strong><span>Coming soon</span></div>
-         <div class="r5-settings-row"><strong>Data & storage</strong><span>Coming soon</span></div>
-       </div>
-       <div class="r5-settings-section">Support</div>
-       <div class="r5-settings-list">
-         <div class="r5-settings-row"><strong>About R5 Atlas</strong><span>Coming soon</span></div>
-         <div class="r5-settings-row"><strong>Diagnostics</strong><span>Coming soon</span></div>
-         <div class="r5-settings-row"><strong>Reset app data</strong><span>Coming soon</span></div>
+         <div class="r5-settings-row"><strong>Installed build</strong><span>v${escapeHtml(BUILD_VERSION)}</span></div>
+         <div class="r5-settings-row"><strong>Update policy</strong><span>${pref === 'yes' ? 'Automatic' : pref === 'no' ? 'Notify first' : 'Choose below'}</span></div>
        </div>`,
       [
         ...(isStandalone() ? [] : [{ label: 'Install app', className: 'r5-primary', onClick: () => { closeModal(); installApp(); } }]),

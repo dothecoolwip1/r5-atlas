@@ -1,36 +1,72 @@
-name: Check Testing JavaScript
+name: Check Testing Architecture
 
 on:
   push:
+    branches: [main]
     paths:
       - '.github/workflows/check-testing-js.yml'
-      - 'testing/index.html'
-      - 'testing/app-update.js'
-      - 'testing/lsd-converter.js'
-      - 'testing/lsd-converter-v2.js'
+      - 'testing/**'
+      - 'app/**'
+  pull_request:
+    paths:
+      - 'testing/**'
+      - 'app/**'
 
 permissions:
   contents: read
 
 jobs:
-  check:
+  static:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Extract and check every inline script
+      - name: Check browser JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
+          find testing/js -type f -name '*.js' -print -exec node --check {} \;
+          node --check testing/data/facilities.js
+          node --check testing/app-update.js
+          node --check testing/sw.js
+      - name: Enforce Pack 1 architecture
+        shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
           html=Path('testing/index.html').read_text(encoding='utf-8')
-          blocks=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',html,re.S|re.I)
-          print('inline scripts',len(blocks))
-          for i,b in enumerate(blocks):
-              p=Path(f'/tmp/inline-{i}.js')
-              p.write_text(b,encoding='utf-8')
-              print(i,len(b),p)
+          app=Path('testing/js/app.js').read_text(encoding='utf-8')
+          if re.search(r'<style\b', html, re.I):
+              raise SystemExit('testing/index.html still contains inline CSS')
+          inline=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',html,re.S|re.I)
+          if inline:
+              raise SystemExit(f'testing/index.html still contains {len(inline)} inline scripts')
+          names=re.findall(r'\bfunction\s+([A-Za-z_$][\w$]*)\s*\(',app)
+          dup=sorted({n for n in names if names.count(n)>1})
+          if dup:
+              raise SystemExit('Duplicate function declarations remain: '+', '.join(dup))
+          forbidden=['raw.githubusercontent.com/dothecoolwip1/r5-atlas/71cbae','prompt(','confirm(','Coming soon']
+          text='\n'.join([html,app,Path('testing/app-update.js').read_text(encoding='utf-8')])
+          for token in forbidden:
+              if token in text:
+                  raise SystemExit('Forbidden legacy runtime token remains: '+token)
+          required=[
+              'testing/data/alberta-ats-v41-lsd.bin.gz',
+              'testing/data/alberta-ats-v41-lsd.manifest.json',
+              'testing/js/lsd-converter.bundle.js',
+              'testing/js/core/storage.js',
+              'testing/js/core/providers.js',
+          ]
+          for p in required:
+              if not Path(p).exists():
+                  raise SystemExit('Required Pack 1 file missing: '+p)
+          print('Pack 1 static architecture checks passed')
           PY
-          for f in /tmp/inline-*.js; do echo "CHECK $f"; node --check "$f"; done
+      - name: Check React and TypeScript migration workspace
+        working-directory: app
+        run: |
+          npm install --no-audit --no-fund
+          npm run check

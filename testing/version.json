@@ -1,13 +1,15 @@
 {
-  "version": "0.6.0",
+  "version": "0.7.0",
   "releasedAt": "2026-09-20",
-  "title": "Field UI redesign and 0.5 km well search",
+  "title": "Pack 1 architecture and legacy cleanup",
   "notes": [
-    "The default nearby well search radius is now 0.5 km, with 1, 2, 5, 10 km and Exact LSD available beside it.",
-    "Reworked the mobile Wells screen into a clearer search-area selector, well filter, pin toggle, live-data source badge, and cleaner result cards.",
-    "Renamed Job History to Saved LSDs so the interface matches the new one-record-per-LSD behaviour.",
-    "Saved LSDs now show a record count and the active LSD panel shows previous search date and search count when available.",
-    "Refined the map search, top bar, bottom navigation, cards, buttons, spacing, shadows, and mobile bottom sheets for faster one-hand field use.",
-    "The well data source remains explicit: live AER OneStop online with the automatically refreshed ST37 data as offline fallback."
+    "Split the testing app into a small HTML shell, external stylesheet, application runtime, data module, storage adapter, and provider adapter.",
+    "Combined the LSD converter runtime layers into one reusable converter bundle while preserving the authoritative offline Alberta ATS pack.",
+    "Removed duplicate legacy function declarations and the historical override stack from active runtime logic.",
+    "Removed the remote legacy 43 MB well-data HTML fallback. Well snapshot files now cache only when Wells needs them and can be reused offline after an online load.",
+    "Replaced native browser prompt and confirm dialogs with in-app field-friendly controls.",
+    "Removed placeholder settings rows and kept only settings that currently work.",
+    "Archived the standalone LandTracker reconstruction and removed obsolete recovery, diagnostic, scraping, and reverse-engineering workflows from the active project.",
+    "Added a React and TypeScript migration workspace plus typed converter, storage, and provider boundaries for later architecture packs."
   ]
 }

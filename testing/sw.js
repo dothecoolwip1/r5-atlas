@@ -1,14 +1,18 @@
 /* R5 Atlas service worker. Version is supplied by the registration URL. */
 const scriptUrl = new URL(self.location.href);
 const APP_VERSION = scriptUrl.searchParams.get('v') || 'unknown';
-const CACHE_NAME = `r5-atlas-${APP_VERSION}-light-shell`;
+const CACHE_NAME = `r5-atlas-${APP_VERSION}-modular-shell`;
 const PRECACHE = [
   './',
   './index.html',
+  './styles/app.css',
+  './js/app.js',
+  './js/core/storage.js',
+  './js/core/providers.js',
+  './js/lsd-converter.bundle.js',
+  './data/facilities.js',
   './app-update.js',
   './manifest.webmanifest',
-  './lsd-converter.js',
-  './lsd-converter-v2.js',
   './data/alberta-ats-v41-lsd.bin.gz',
   './assets/r5-atlas-app-icon.png',
   './assets/r5-atlas-logo.png'
@@ -21,9 +25,7 @@ self.addEventListener('install', event => {
       try {
         const response = await fetch(url, { cache: 'reload' });
         if (response.ok) await cache.put(url, response.clone());
-      } catch (_) {
-        // A single optional asset must not prevent installation.
-      }
+      } catch (_) {}
     }
     if (!self.registration.active) await self.skipWaiting();
   })());
@@ -68,16 +70,13 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-
   if (url.pathname.endsWith('/version.json')) {
     event.respondWith(fetch(request, { cache: 'no-store' }));
     return;
   }
-
   if (request.mode === 'navigate') {
     event.respondWith(networkFirst(request));
     return;
   }
-
   event.respondWith(cacheFirst(request));
 });
