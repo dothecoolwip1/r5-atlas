@@ -578,7 +578,89 @@ function closeWellDetail(){document.getElementById('wellDetailBackdrop').classLi
 function wellCard(p,i){const surf=displaySurfaceDls(p.surfaceDls)||job?.ats||'Surface location';const b=p.bores?.[0]||{};return `<article class="well-card"><div class="well-body"><div class="well-section-label">Surface Location</div><div class="well-surface-value">${esc(surf)}</div><div class="well-meta mono">${p.lat.toFixed(6)}, ${p.lng.toFixed(6)} • ${p.distance.toFixed(2)} km from job</div><div style="margin-top:9px"><div class="well-section-label">Well${p.bores.length>1?'s':''}</div><div class="well-name">${esc(b.name||displayUwi(b))}</div><div class="well-lines"><div><b>UWI:</b> <span class="mono">${esc(displayUwi(b))}</span></div><div><b>Licensee:</b> ${b.licensee?`<button class="licensee-link" data-licensee="${esc(b.licensee)}">${esc(b.licensee)}</button>`:'Not reported'}</div><div><b>Status:</b> ${esc(b.status||'Not reported')}</div>${p.bores.length>1?`<div><b>${p.bores.length} wellbores at this surface</b></div>`:''}</div></div><div class="actions"><button data-well-detail="${i}">Details</button><button data-well-focus="${i}">Show on Map</button><a target="_blank" rel="noopener" href="${directions(job.lat,job.lng,p.lat,p.lng)}">Directions</a></div></div></article>`}
 function renderWells(){clearWellMarkersOnly();const q=document.getElementById('wellSearch').value.toLowerCase().trim();const pads=loadedPads.filter(p=>!q||[...p.surfaces.map(s=>`${s.licence} ${s.licensee} ${s.status}`),...p.bores.map(b=>`${b.uwi} ${b.rawUwi} ${b.name} ${b.licence} ${b.licensee} ${b.status}`)].join(' ').toLowerCase().includes(q));document.getElementById('wellStatus').textContent=wellMode.type==='lsd'?`${loadedPads.length} surface location${loadedPads.length===1?'':'s'} start inside this LSD. ${pads.length} shown.`:`${loadedPads.length} surface locations loaded. ${pads.length} shown within ${wellMode.km} km.`;document.getElementById('wellStatus').className='status ok';if(wellsVisible)pads.forEach(p=>{const m=L.marker([p.lat,p.lng],{icon:makeWellIcon(p.bores.length)}).addTo(map);m.on('click',()=>selectSurfacePad(p));wellMarkers.push(m)});document.getElementById('wellGrid').innerHTML=pads.slice(0,100).map((p,i)=>wellCard(p,i)).join('')+(pads.length>100?'<div class="status">Showing the nearest 100 surface locations. Use the search or a smaller radius.</div>':'');bindWellActions(pads);if(loadedPads.length&&!selectedSurfacePad)selectedSurfacePad=loadedPads[0];updateHistorySurfaceInfo(selectedSurfacePad||loadedPads[0]);updateMapJobBar()}
 function bindWellActions(pads){document.querySelectorAll('[data-well-detail]').forEach(b=>b.onclick=()=>openWellDetail(pads[+b.dataset.wellDetail],0));document.querySelectorAll('[data-well-focus]').forEach(b=>b.onclick=()=>{const p=pads[+b.dataset.wellFocus];selectSurfacePad(p);map.setView([p.lat,p.lng],15);closeMobileSheets()});document.querySelectorAll('[data-licensee]').forEach(b=>b.onclick=()=>openCompanyProfile(b.dataset.licensee))}
-async function loadWells(){if(!job)return;document.getElementById('wellStatus').textContent='Loading surface wells in this LSD...';try{await ensureSt37();const surfaces=candidateSurfaces();loadedPads=groupPads(surfaces);selectedSurfacePad=null;selectedSurfaceBore=0;renderWells()}catch(e){document.getElementById('wellStatus').textContent=e.message;document.getElementById('wellStatus').className='status error'}}
+const AER_WELL_LAYER='https://gisservices.aer.ca/arcgis/rest/services/OneStop/MS_Asset/MapServer/0/query';
+function wellSearchBounds(){
+  if(wellMode.type==='lsd'&&job?.geometry?.rings?.[0]){
+    const ring=job.geometry.rings[0];
+    return{minLat:Math.min(...ring.map(x=>x[1])),maxLat:Math.max(...ring.map(x=>x[1])),minLng:Math.min(...ring.map(x=>x[0])),maxLng:Math.max(...ring.map(x=>x[0]))};
+  }
+  const km=wellMode.km||2,dlat=km/111.2,dlng=km/(111.2*Math.cos(job.lat*Math.PI/180));
+  return{minLat:job.lat-dlat,maxLat:job.lat+dlat,minLng:job.lng-dlng,maxLng:job.lng+dlng};
+}
+async function loadLiveAerWells(){
+  const b=wellSearchBounds();
+  const q=new URLSearchParams({
+    where:'1=1',
+    geometry:`${b.minLng},${b.minLat},${b.maxLng},${b.maxLat}`,
+    geometryType:'esriGeometryEnvelope',
+    inSR:'4326',
+    spatialRel:'esriSpatialRelIntersects',
+    outFields:'Well_Licence_Number,Well_Name,Well_Type,Well_Purpose,UWI,Licence_Status,Licence_Status_Date,Company_BA_Long_Name,Status_Fluid,Surface_Location,Calculated_Latitude,Calculated_Longitude,Maximum_Estimated_H2S,Is_Well_Sour',
+    returnGeometry:'false',
+    resultRecordCount:'2000',
+    f:'json'
+  });
+  const d=await fetchJson(`${AER_WELL_LAYER}?${q.toString()}`,15000);
+  const rows=(d.features||[]).map(f=>f.attributes||{}).map(a=>({
+    lat:+a.Calculated_Latitude,
+    lng:+a.Calculated_Longitude,
+    licence:String(a.Well_Licence_Number||''),
+    licensee:String(a.Company_BA_Long_Name||''),
+    status:String(a.Licence_Status||''),
+    statusDate:a.Licence_Status_Date?new Date(a.Licence_Status_Date).toISOString().slice(0,10):'',
+    category:String(a.Well_Type||a.Well_Purpose||a.Status_Fluid||''),
+    surfaceDls:String(a.Surface_Location||''),
+    uwi:String(a.UWI||''),
+    name:String(a.Well_Name||''),
+    h2s:Number.isFinite(+a.Maximum_Estimated_H2S)?+a.Maximum_Estimated_H2S:null,
+    isSour:String(a.Is_Well_Sour||'')
+  })).filter(r=>Number.isFinite(r.lat)&&Number.isFinite(r.lng));
+  const exact=rows.filter(r=>{
+    if(wellMode.type==='lsd'&&job.geometry?.rings?.[0])return pointInJobPolygon(r.lat,r.lng);
+    return haversineKm(job.lat,job.lng,r.lat,r.lng)<=wellMode.km;
+  });
+  const pads=new Map();
+  for(const r of exact){
+    const key=`${r.lat.toFixed(6)}|${r.lng.toFixed(6)}`;
+    let p=pads.get(key);
+    if(!p){p={key,lat:r.lat,lng:r.lng,surfaces:[],bores:[],distance:haversineKm(job.lat,job.lng,r.lat,r.lng),surfaceDls:r.surfaceDls||''};pads.set(key,p)}
+    p.surfaces.push(r);
+    p.bores.push({licence:r.licence,licensee:r.licensee,status:r.status,statusDate:r.statusDate,uwi:r.uwi,rawUwi:r.uwi,name:r.name||(`AER Licence ${r.licence}`),tmd:null,tvd:null,bhLat:null,bhLng:null,type:r.category,h2s:r.h2s,isSour:r.isSour});
+    if(!p.surfaceDls&&r.surfaceDls)p.surfaceDls=r.surfaceDls;
+  }
+  return[...pads.values()].sort((a,b)=>a.distance-b.distance);
+}
+async function loadWells(){
+  if(!job)return;
+  const status=document.getElementById('wellStatus');
+  status.className='status';
+  status.textContent=wellMode.type==='lsd'?'Loading live AER surface wells in this LSD...':`Loading live AER surface wells within ${wellMode.km} km...`;
+  try{
+    loadedPads=await loadLiveAerWells();
+    selectedSurfacePad=null;
+    selectedSurfaceBore=0;
+    renderWells();
+    status.textContent+=(status.textContent?' ':'')+'Live AER data.';
+    return;
+  }catch(liveError){
+    console.warn('Live AER well lookup failed, using ST37 fallback',liveError);
+  }
+  status.textContent='Live AER lookup unavailable. Loading the offline ST37 well snapshot...';
+  try{
+    await Promise.race([
+      ensureSt37(),
+      new Promise((_,reject)=>setTimeout(()=>reject(Error('Well data timed out. Check your connection and try again.')),30000))
+    ]);
+    const surfaces=candidateSurfaces();
+    loadedPads=groupPads(surfaces);
+    selectedSurfacePad=null;
+    selectedSurfaceBore=0;
+    renderWells();
+  }catch(e){
+    status.textContent=e?.message||'Well data could not be loaded.';
+    status.className='status error';
+  }
+}
 function nearestHtml(){const list=facilities.filter(f=>activeCats[f.c]).map(f=>({f,r:routes.get(f.n)})).filter(x=>x.r).sort((a,b)=>a.r.distance-b.r.distance).slice(0,3);return list.map(({f,r})=>`<div class="recommend ${selectedDisposal===f.n?'selected':''}"><div><b>#${f.n} ${esc(f.name)}</b><div class="meta">${esc(f.type)} • ${esc(f.place)}</div><div class="actions"><button data-pick-disposal="${f.n}">${selectedDisposal===f.n?'Selected':'Select'}</button><a target="_blank" rel="noopener" href="${directions(job.lat,job.lng,f.lat,f.lng)}">Directions</a></div></div><div class="drive">${(r.distance/1000).toFixed(1)} km<div class="sub">${formatDuration(r.duration)}</div></div></div>`).join('')||'<div class="status">No routed facilities in the selected disposal types.</div>'}
 function bindNearestButtons(){document.querySelectorAll('[data-pick-disposal]').forEach(b=>b.onclick=()=>selectDisposal(Number(b.dataset.pickDisposal)))}
 function renderNearest(){if(!job)return;const html=nearestHtml();document.getElementById('nearestDisposals').innerHTML=html;document.getElementById('mobileNearestDisposals').innerHTML=html;bindNearestButtons()}
