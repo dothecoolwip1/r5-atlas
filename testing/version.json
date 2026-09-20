@@ -1,10 +1,12 @@
 {
-  "version": "0.5.4",
+  "version": "0.5.5",
   "releasedAt": "2026-09-20",
-  "title": "Updater loop fix",
+  "title": "Persistent LSD records and well source visibility",
   "notes": [
-    "Fixed the update loop where the app refreshed and immediately asked to install the same update again.",
-    "Synchronized the testing page build number with the release manifest so the installed app can confirm an update completed.",
-    "Includes the new live AER surface well lookup with ST37 fallback and timeout from the previous patch."
+    "Searching the same LSD now reopens and updates the existing saved record instead of creating duplicate history entries.",
+    "Saved notes, disposal selection, surface well information, first searched time, last searched time, and search count stay attached to the LSD.",
+    "Existing duplicate LSD history entries are merged automatically on load while preserving saved information.",
+    "The Wells panel now clearly shows whether results came from live AER OneStop or the offline August 2026 ST37 fallback.",
+    "Online well searches query the AER OneStop Well Licences layer first."
   ]
 }
