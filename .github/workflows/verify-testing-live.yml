@@ -81,6 +81,8 @@ jobs:
           const onlineDetails=await page.locator('#jobDetails').innerText();
           assert(onlineDetails.includes('06-32-048-07 W5M'),'Online LSD lookup returned the wrong active LSD');
 
+          await page.locator('.mobile-nav button[data-scroll="jobSection"]').click();
+          await page.waitForSelector('#jobSection.mobile-open');
           await page.locator('#jobNotes').fill('Pack 1 verification note');
           await page.waitForTimeout(700);
           const history=await page.evaluate(()=>JSON.parse(localStorage.getItem('albertaOilfieldFieldMapHistoryV15')||'[]'));
