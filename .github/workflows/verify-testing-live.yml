@@ -31,7 +31,7 @@ jobs:
           import { chromium } from 'playwright';
 
           const base='https://dothecoolwip1.github.io/r5-atlas/testing/';
-          const expected='0.9.5';
+          const expected='0.10.0';
           const pid='5070483206';
           const canonical='06-32-048-07 W5M';
           const legacyKey='albertaOilfieldFieldMapHistoryV15';
@@ -97,10 +97,10 @@ jobs:
           const pageErrors=[];
           page.on('pageerror',e=>pageErrors.push(String(e)));
 
-          await page.goto(base+'?pack3='+Date.now(),{waitUntil:'domcontentloaded',timeout:120000});
+          await page.goto(base+'?pack4='+Date.now(),{waitUntil:'domcontentloaded',timeout:120000});
           await page.waitForSelector('#jobInput',{state:'visible',timeout:30000});
           await page.waitForFunction(v=>document.querySelector('meta[name="r5-app-version"]')?.content===v,expected);
-          await page.waitForFunction(()=>globalThis.R5Pack2Ready && globalThis.R5UniversalSearch && globalThis.R5DeviceStore);
+          await page.waitForFunction(()=>globalThis.R5Pack2Ready && globalThis.R5UniversalSearch && globalThis.R5DeviceStore && globalThis.R5MapUI && globalThis.R5FieldUI);
           await page.evaluate(()=>globalThis.R5Pack2Ready);
 
           assert((await page.locator('.data-pill').innerText()).includes(expected),'Visible version is not v'+expected);
@@ -206,6 +206,78 @@ jobs:
           await page.waitForFunction(()=>!document.querySelector('.content>.section.mobile-open'));
           assert(await page.locator('.mobile-nav button[data-scroll="mapSection"]').evaluate(el=>el.classList.contains('active')),'Map did not return to the active home state');
 
+          const mapUi=await page.evaluate(()=>R5MapUI.status());
+          assert(mapUi.markerClusterAvailable===true,'Leaflet marker clustering did not load');
+          assert(mapUi.facilityCount>0,'Disposal marker cluster layer is empty');
+          await page.evaluate(()=>map.setView([54,-114.5],4));
+          await page.waitForSelector('.r5-cluster-disposal',{timeout:10000});
+          assert((await page.locator('.r5-cluster-disposal').count())>0,'Disposal facilities are not clustering at low zoom');
+
+          await page.locator('.well-radius[data-km="10"]').click();
+          await page.waitForFunction(()=>R5MapUI.status().wellCount>1,null,{timeout:60000});
+          await page.evaluate(()=>map.setZoom(10));
+          await page.waitForSelector('.r5-cluster-well',{timeout:15000});
+          assert((await page.locator('.r5-cluster-well').count())>0,'Surface wells are not clustering when markers overlap');
+
+          const disposalMarkerTitle=await page.locator('.leaflet-marker-icon[title^="Disposal"]').first().getAttribute('title');
+          assert(!!disposalMarkerTitle,'Disposal markers do not expose accessible titles');
+          assert((await page.locator('#facilityCategoryFilters .filter-chip[data-cat="red"]').getAttribute('data-state-label'))==='On','Disposal filter lacks visible non-colour state');
+          const firstFacilityLabel=await page.locator('.facility').first().getAttribute('aria-label');
+          assert(!!firstFacilityLabel,'Disposal cards do not have meaningful accessible labels');
+          const firstWellLabel=await page.locator('.well-card').first().getAttribute('aria-label');
+          assert(!!firstWellLabel,'Well cards do not have meaningful accessible labels');
+          const findHeight=await page.locator('#findJob').evaluate(el=>el.getBoundingClientRect().height);
+          const clearHeight=await page.locator('#clearWellSearch').evaluate(el=>el.getBoundingClientRect().height);
+          assert(findHeight>=44 && clearHeight>=44,'Pack 4 controls are below the 44 px touch target minimum');
+
+          await page.locator('#fieldModeToggle').click();
+          assert(await page.locator('body').evaluate(el=>el.classList.contains('field-mode')),'Field Mode did not activate');
+          assert((await page.locator('#fieldModeToggle').getAttribute('aria-pressed'))==='true','Field Mode aria state did not activate');
+          assert((await page.evaluate(()=>localStorage.getItem('r5-atlas-field-mode-v1')))==='yes','Field Mode preference was not persisted');
+          const fieldHeight=await page.locator('#findJob').evaluate(el=>el.getBoundingClientRect().height);
+          assert(fieldHeight>=50,'Field Mode did not enlarge primary controls');
+
+          const fieldPage=await context.newPage();
+          await fieldPage.goto(base+'?field-persist='+Date.now(),{waitUntil:'domcontentloaded',timeout:120000});
+          await fieldPage.waitForFunction(()=>globalThis.R5FieldUI);
+          assert(await fieldPage.locator('body').evaluate(el=>el.classList.contains('field-mode')),'Field Mode did not persist into a new app page');
+          await fieldPage.close();
+          await page.evaluate(()=>R5FieldUI.setFieldMode(false));
+          assert((await page.evaluate(()=>localStorage.getItem('r5-atlas-field-mode-v1')))==='no','Field Mode did not persist the off state');
+
+          await page.setViewportSize({width:1024,height:768});
+          await page.waitForFunction(()=>R5FieldUI.getLayout()==='tablet-landscape');
+          const tabletLayout=await page.evaluate(()=>{
+            const m=document.getElementById('mapSection').getBoundingClientRect();
+            const d=document.querySelector('main.content').getBoundingClientRect();
+            return{layout:R5FieldUI.getLayout(),mapRight:m.right,detailsLeft:d.left,mapHeight:m.height,detailsHeight:d.height};
+          });
+          assert(tabletLayout.layout==='tablet-landscape','Tablet landscape mode was not detected');
+          assert(tabletLayout.mapRight<=tabletLayout.detailsLeft+12,'Tablet map and details are not split into adjacent columns');
+          assert(tabletLayout.mapHeight>500 && tabletLayout.detailsHeight>500,'Tablet split layout does not use the landscape viewport');
+
+          await page.setViewportSize({width:1440,height:900});
+          await page.waitForFunction(()=>R5FieldUI.getLayout()==='desktop' && document.querySelector('.page')?.classList.contains('desktop-workspace'));
+          const desktopLayout=await page.evaluate(()=>{
+            const left=document.querySelector('.desktop-left-rail').getBoundingClientRect();
+            const mapBox=document.getElementById('mapSection').getBoundingClientRect();
+            const right=document.querySelector('.desktop-right-rail').getBoundingClientRect();
+            return{
+              searchParent:document.querySelector('.map-search')?.parentElement?.className||'',
+              savedParent:document.getElementById('historySection')?.parentElement?.className||'',
+              jobParent:document.getElementById('jobSection')?.parentElement?.className||'',
+              leftRight:left.right,mapLeft:mapBox.left,mapRight:mapBox.right,rightLeft:right.left
+            };
+          });
+          assert(desktopLayout.searchParent.includes('desktop-search-slot'),'Desktop search is not in the left rail');
+          assert(desktopLayout.savedParent.includes('desktop-saved-slot'),'Desktop Saved panel is not in the left rail');
+          assert(desktopLayout.jobParent.includes('desktop-detail-slot'),'Desktop details are not in the right rail');
+          assert(desktopLayout.leftRight<=desktopLayout.mapLeft+4 && desktopLayout.mapRight<=desktopLayout.rightLeft+4,'Desktop three-panel ordering is incorrect');
+
+          await page.setViewportSize({width:390,height:844});
+          await page.waitForFunction(()=>R5FieldUI.getLayout()==='mobile' && document.getElementById('historySection')?.parentElement?.classList.contains('content'));
+          assert(await page.locator('.mobile-nav').isVisible(),'Mobile navigation did not restore after desktop layout');
+
           await page.waitForSelector('#r5-settings-gear',{timeout:10000});
           await page.locator('#r5-settings-gear').click();
           await page.waitForSelector('#r5-app-modal');
@@ -290,8 +362,8 @@ jobs:
           assert(record.visitCount>=3,'Offline PID load did not add a visit');
 
           assert(pageErrors.length===0,'Page errors after offline reload: '+pageErrors.join(' | '));
-          await page.screenshot({path:'pack3-mobile-offline.png',fullPage:true});
+          await page.screenshot({path:'pack4-mobile-offline.png',fullPage:true});
           await browser.close();
-          console.log('Pack 3 live browser verification passed: universal field search, PID, GPS recognition, favourites, recents, company, UWI, disposal, map-home navigation, truthful data status, real cached ST37 fallback and offline PID reload.');
+          console.log('Pack 4 live browser verification passed: Pack 3 search/offline behavior plus clustered semantic markers, accessibility targets, Field Mode, tablet landscape and desktop three-panel workspace.');
           JS
           node verify.mjs
