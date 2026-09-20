@@ -2,6 +2,7 @@ const modules = [
   ['Converter', 'Single reusable legal-land adapter backed by the authoritative offline ATS pack.'],
   ['Storage', 'Canonical saved LSD records now use a typed IndexedDB device store, with the key-value adapter retained for lightweight preferences.'],
   ['Providers', 'Network access is isolated behind provider interfaces instead of being scattered through UI code.'],
+  ['Universal Search', 'Field intelligence resolves legal land, saved records, wells, companies and disposals through ranked online-first and offline-capable providers.'],
 ] as const;
 
 export default function App() {
@@ -10,7 +11,7 @@ export default function App() {
       <p style={{ fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>R5 Atlas</p>
       <h1>React and TypeScript migration workspace</h1>
       <p>
-        Pack 2 adds the canonical device-first saved-location model while the proven field UI remains in service until React feature parity is verified.
+        Pack 3 adds universal field intelligence and explicit live/cached/GPS state while the proven field UI remains in service until React feature parity is verified.
       </p>
       <section aria-label="Architecture modules">
         {modules.map(([name, description]) => (
