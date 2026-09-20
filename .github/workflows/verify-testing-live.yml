@@ -161,6 +161,7 @@ jobs:
 
           await page.locator('.mobile-nav button[data-scroll="wellsPanel"]').click();
           await page.waitForSelector('#wellsPanel.mobile-open');
+          await page.waitForSelector('#wellsPanel .well-card',{state:'visible',timeout:60000});
           const wellsMobileLayout=await page.evaluate(()=>{
             const sheet=document.getElementById('wellsPanel').getBoundingClientRect();
             const toolbar=document.querySelector('#wellsPanel .well-toolbar').getBoundingClientRect();
