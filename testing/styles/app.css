@@ -306,7 +306,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   outline:3px solid var(--r5-focus)!important;
   outline-offset:2px!important;
 }
-.primary-btn,.soft-btn,.mini-btn,.chip,.saved-filter-btn,.actions button,.actions a,.map-bottom-card button,.map-bottom-card a,.directory-collapse-toggle,.drawer-close,.well-detail-close,.company-map-close{
+button,select{min-height:var(--r5-control-min)}
+.primary-btn,.soft-btn,.mini-btn,.chip,.saved-filter-btn,.actions button,.actions a,.map-bottom-card button,.map-bottom-card a,.directory-collapse-toggle,.drawer-close,.well-detail-close,.company-map-close,.company-type-filter{
   min-height:var(--r5-control-min);
 }
 .actions a,.actions button{display:inline-flex;align-items:center;justify-content:center}
