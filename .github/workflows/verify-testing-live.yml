@@ -31,7 +31,7 @@ jobs:
           import { chromium } from 'playwright';
 
           const base='https://dothecoolwip1.github.io/r5-atlas/testing/';
-          const expected='0.9.3';
+          const expected='0.9.4';
           const pid='5070483206';
           const canonical='06-32-048-07 W5M';
           const legacyKey='albertaOilfieldFieldMapHistoryV15';
@@ -175,6 +175,22 @@ jobs:
           assert(recents.some(x=>x.type==='legal' && x.value===pid),'PID search was not added to recent searches');
           assert(recents.some(x=>x.type==='facility'),'Disposal search was not added to recent searches');
 
+          const st37Probe=await page.evaluate(async()=>{
+            await ensureSt37();
+            for(const rows of surfaceGrid.values()){
+              for(const row of rows||[]){
+                const licence=String(row?.[2]||'').trim();
+                if(!licence)continue;
+                const bores=boresByLicence.get(licence)||[];
+                if(bores.length){
+                  return {query:licence,company:String(row?.[3]||'').trim(),surfaceDls:String(row?.[7]||'').trim()};
+                }
+              }
+            }
+            return null;
+          });
+          assert(st37Probe?.query,'Could not derive a real ST37 well probe for offline regression');
+
           await page.locator('.mobile-nav button[data-scroll="historySection"]').click();
           await page.waitForSelector('#historySection.mobile-open');
           await page.locator('.mobile-nav button[data-scroll="mapSection"]').click();
@@ -201,7 +217,9 @@ jobs:
 
           assert(await page.locator('meta[name="r5-app-version"]').getAttribute('content')===expected,'Offline reload did not serve v'+expected);
           assert((await page.locator('#connectionStatus').innerText()).includes('OFFLINE'),'Offline status strip does not show OFFLINE');
-          assert((await page.locator('#dataSourceStatus').innerText()).includes('ST37'),'Offline data strip does not identify ST37');
+          await page.waitForFunction(()=>document.querySelector('#dataSourceStatus')?.textContent?.includes('ST37'),null,{timeout:15000});
+          assert((await page.locator('#dataSourceStatus').innerText()).includes('ST37'),'Offline data strip does not identify the cached ST37 snapshot');
+          assert((await page.evaluate(()=>R5UniversalSearch.status().st37Cached))===true,'Universal-search status does not report the cached ST37 snapshot');
 
           await page.locator('#jobInput').focus();
           await page.waitForSelector('#universalSearchResults:not(.hidden)');
@@ -224,6 +242,14 @@ jobs:
           await page.waitForTimeout(300);
           assert((await page.locator('#universalSearchResults').innerText()).includes('Well'),'Offline canonical-UWI search failed');
 
+          await page.locator('#jobInput').fill(st37Probe.query);
+          await page.waitForFunction(()=>{
+            const host=document.querySelector('#universalSearchResults');
+            return host && !host.classList.contains('hidden') && host.textContent.includes('Well');
+          },null,{timeout:120000});
+          const st37Results=await page.locator('#universalSearchResults').innerText();
+          assert(st37Results.includes('Well'),'Real cached ST37 lookup did not return an offline well result');
+
           await page.locator('#jobInput').fill(facilityName);
           await page.waitForTimeout(350);
           assert((await page.locator('#universalSearchResults').innerText()).includes('Disposal'),'Offline disposal search failed');
@@ -244,6 +270,6 @@ jobs:
           assert(pageErrors.length===0,'Page errors after offline reload: '+pageErrors.join(' | '));
           await page.screenshot({path:'pack3-mobile-offline.png',fullPage:true});
           await browser.close();
-          console.log('Pack 3 live browser verification passed: universal field search, PID, GPS recognition, favourites, recents, company, UWI, disposal, map-home navigation, status strip and offline PID reload.');
+          console.log('Pack 3 live browser verification passed: universal field search, PID, GPS recognition, favourites, recents, company, UWI, disposal, map-home navigation, truthful data status, real cached ST37 fallback and offline PID reload.');
           JS
           node verify.mjs
