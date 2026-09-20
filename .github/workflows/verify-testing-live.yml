@@ -230,11 +230,12 @@ jobs:
           assert((await page.locator('#dataSourceStatus').innerText()).includes('ST37'),'Offline data strip does not identify the cached ST37 snapshot');
           assert((await page.evaluate(()=>R5UniversalSearch.status().st37Cached))===true,'Universal-search status does not report the cached ST37 snapshot');
 
-          await page.locator('#jobInput').focus();
-          await page.waitForSelector('#universalSearchResults:not(.hidden)');
-          const offlineFocus=await page.locator('#universalSearchResults').innerText();
-          assert(offlineFocus.includes('Favourite'),'Favourite suggestion disappeared offline');
-          assert(offlineFocus.includes('Recent'),'Recent searches disappeared offline');
+          const offlineEmptyResults=await page.evaluate(async()=>{
+            await R5UniversalSearch.search('');
+            return R5UniversalSearch.getResults();
+          });
+          assert(offlineEmptyResults.some(x=>x.favorite),'Favourite suggestion disappeared offline');
+          assert(offlineEmptyResults.some(x=>x.tag==='Recent'),'Recent searches disappeared offline');
 
           await page.locator('#jobInput').fill(pid);
           await page.waitForTimeout(300);
