@@ -406,6 +406,10 @@
     }
 
     const ranked=dedupeAndRank(instant);
+    if(direct){
+      renderResults(ranked);
+      return;
+    }
     renderResults(ranked,q.length>=3?'Searching wells and companies…':'');
     if(q.length<3&&!force)return;
 
@@ -702,7 +706,6 @@
 
   Promise.resolve(globalThis.R5Pack2Ready).catch(function(){}).then(function(){
     updateNavStates();
-    void updateSuggestions({force:false});
   });
   bindObservers();
   void readSt37Meta().then(updateConnectionStatus);
