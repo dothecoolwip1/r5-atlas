@@ -1,7 +1,7 @@
 {
-  "version": "0.10.5",
+  "version": "0.10.6",
   "releasedAt": "2026-09-20",
-  "title": "Pack 4 mobile UI correction",
+  "title": "Mobile search and disposal stacking correction",
   "notes": [
     "Rebuilt the phone layout after field review to restore a clean map-first interface.",
     "Fixed the Settings gear mounting in the wrong fallback position beside the logo and anchored it to the right side of the header.",
@@ -17,6 +17,8 @@
     "Kept the corrected top-right Settings control at the 44 px minimum field touch target.",
     "Kept normal success text out of the compact phone search card so loading a job cannot make the filter row collide with the search surface.",
     "Field Mode now enlarges the compact phone search controls without returning to the oversized Pack 4 layout.",
-    "Raised the mobile search stacking layer so universal-search suggestions always remain tappable above the disposal filter row."
+    "Raised the mobile search stacking layer so universal-search suggestions always remain tappable above the disposal filter row.",
+    "Locked the mobile visual order to search first and disposal filters underneath it with a clear vertical gap.",
+    "Universal-search suggestions now suppress disposal controls while open so filters cannot visually cover the search UI or intercept taps."
   ]
 }
