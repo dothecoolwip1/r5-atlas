@@ -572,9 +572,8 @@
         activeCats[f.c]=true;
         renderFacilities();
         closeMobileSheets();
-        map.flyTo([f.lat,f.lng],12);
-        const marker=facilityMarkers.get(f.n);
-        if(marker)marker.openPopup();
+        if(globalThis.R5MapUI?.focusFacility)globalThis.R5MapUI.focusFacility(f.n,12);
+        else map.flyTo([f.lat,f.lng],12);
         jobStatus.textContent='Disposal: #'+f.n+' '+f.name+' • '+f.place;
         jobStatus.className='map-status ok';
         saveRecent(item);
