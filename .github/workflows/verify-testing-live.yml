@@ -140,12 +140,18 @@ jobs:
           assert(recordUwi,'Canonical record does not contain searchable UWI metadata');
 
           await page.locator('#jobInput').fill(recordCompany);
-          await page.waitForTimeout(350);
+          await page.waitForFunction(()=>{
+            const host=document.querySelector('#universalSearchResults');
+            return host && !host.classList.contains('hidden') && host.textContent.includes('Company');
+          },null,{timeout:15000});
           const companyResults=await page.locator('#universalSearchResults').innerText();
           assert(companyResults.includes('Company'),'Saved company/operator was not recognized by universal search');
 
           await page.locator('#jobInput').fill(recordUwi);
-          await page.waitForTimeout(350);
+          await page.waitForFunction(()=>{
+            const host=document.querySelector('#universalSearchResults');
+            return host && !host.classList.contains('hidden') && host.textContent.includes('Well');
+          },null,{timeout:15000});
           const wellResults=await page.locator('#universalSearchResults').innerText();
           assert(wellResults.includes('Well'),'Canonical UWI was not recognized by universal search');
 
@@ -235,11 +241,17 @@ jobs:
           assert((await page.locator('#jobDetails').innerText()).includes(canonical),'Offline PID lookup did not resolve the expected LSD');
 
           await page.locator('#jobInput').fill(recordCompany);
-          await page.waitForTimeout(300);
+          await page.waitForFunction(()=>{
+            const host=document.querySelector('#universalSearchResults');
+            return host && !host.classList.contains('hidden') && host.textContent.includes('Company');
+          },null,{timeout:15000});
           assert((await page.locator('#universalSearchResults').innerText()).includes('Company'),'Offline canonical-company search failed');
 
           await page.locator('#jobInput').fill(recordUwi);
-          await page.waitForTimeout(300);
+          await page.waitForFunction(()=>{
+            const host=document.querySelector('#universalSearchResults');
+            return host && !host.classList.contains('hidden') && host.textContent.includes('Well');
+          },null,{timeout:15000});
           assert((await page.locator('#universalSearchResults').innerText()).includes('Well'),'Offline canonical-UWI search failed');
 
           await page.locator('#jobInput').fill(st37Probe.query);
