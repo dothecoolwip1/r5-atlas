@@ -737,8 +737,66 @@ async function setJob(result,{save=true}={}){
   refreshAtsOverlay();
 }
 function clearJob(){job=null;selectedDisposal=null;selectedSurfacePad=null;routes.clear();routeRequest++;if(jobMarker)map.removeLayer(jobMarker);if(jobPolygon)map.removeLayer(jobPolygon);jobMarker=jobPolygon=null;clearWellMarkers();hideWellSelection();document.getElementById('jobArea').classList.add('hidden');document.getElementById('wellsPanel').classList.add('hidden');document.getElementById('jobStatus').textContent='Enter a job location or tap the map.';document.getElementById('jobStatus').className='map-status';['selectedDisposal','mobileSelectedDisposal'].forEach(id=>document.getElementById(id).classList.add('hidden'));document.getElementById('mapJobBar').classList.add('hidden');closeMobileSheets();renderFacilities()}
-function openMobileSheet(id){if(window.innerWidth>720){document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});return}document.querySelectorAll('.content>.section').forEach(x=>x.classList.remove('mobile-open'));document.querySelectorAll('.mobile-nav button').forEach(x=>x.classList.remove('active'));const el=document.getElementById(id);if(!el||el.classList.contains('hidden')){showToast(id==='wellsPanel'?'Choose a job first to see surface wells.':'Choose a job first.');return}el.classList.add('mobile-open');document.getElementById('sheetBackdrop').classList.add('show');document.querySelectorAll(`.mobile-nav button[data-scroll="${id}"]`).forEach(x=>x.classList.add('active'))}
-function closeMobileSheets(){document.querySelectorAll('.content>.section').forEach(x=>x.classList.remove('mobile-open'));document.querySelectorAll('.mobile-nav button').forEach(x=>x.classList.remove('active'));document.getElementById('sheetBackdrop').classList.remove('show')}
+const R5_SHEET_STATE_KEY='r5AtlasSheet';
+let r5SheetHistoryTransition=false;
+function currentSheetState(){return history.state&&history.state[R5_SHEET_STATE_KEY]||null}
+function setMobileSheetHistory(id){
+  if(window.innerWidth>720||r5SheetHistoryTransition)return;
+  const state=Object.assign({},history.state||{});
+  if(state[R5_SHEET_STATE_KEY]){
+    state[R5_SHEET_STATE_KEY]=id;
+    history.replaceState(state,'',location.href);
+  }else{
+    state[R5_SHEET_STATE_KEY]=id;
+    history.pushState(state,'',location.href);
+  }
+}
+function closeMobileSheetsImmediate(){
+  document.querySelectorAll('.content>.section').forEach(x=>x.classList.remove('mobile-open'));
+  document.querySelectorAll('.mobile-nav button').forEach(x=>x.classList.remove('active'));
+  document.getElementById('sheetBackdrop').classList.remove('show');
+}
+function openMobileSheet(id,options={}){
+  if(window.innerWidth>720){document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});return}
+  document.querySelectorAll('.content>.section').forEach(x=>x.classList.remove('mobile-open'));
+  document.querySelectorAll('.mobile-nav button').forEach(x=>x.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(!el||el.classList.contains('hidden')){showToast(id==='wellsPanel'?'Choose a job first to see surface wells.':'Choose a job first.');return}
+  el.classList.add('mobile-open');
+  document.getElementById('sheetBackdrop').classList.add('show');
+  document.querySelectorAll(`.mobile-nav button[data-scroll="${id}"]`).forEach(x=>x.classList.add('active'));
+  if(!options.fromHistory)setMobileSheetHistory(id);
+}
+function closeMobileSheets(options={}){
+  const open=document.querySelector('.content>.section.mobile-open');
+  if(!open){closeMobileSheetsImmediate();return}
+  if(!options.fromHistory&&window.innerWidth<=720&&currentSheetState()){
+    history.back();
+    return;
+  }
+  closeMobileSheetsImmediate();
+}
+window.addEventListener('popstate',event=>{
+  if(window.innerWidth>720)return;
+  const open=document.querySelector('.content>.section.mobile-open');
+  const target=event.state&&event.state[R5_SHEET_STATE_KEY]||null;
+  r5SheetHistoryTransition=true;
+  try{
+    if(open&&!target){
+      closeMobileSheets({fromHistory:true});
+      return;
+    }
+    if(open&&target&&open.id!==target){
+      openMobileSheet(target,{fromHistory:true});
+      return;
+    }
+    if(!open&&target){
+      openMobileSheet(target,{fromHistory:true});
+    }
+  }finally{
+    setTimeout(()=>{r5SheetHistoryTransition=false},0);
+  }
+});
 function fitRelevantPins(){const pts=[];if(job)pts.push([job.lat,job.lng]);if(job&&loadedPads.length)loadedPads.slice(0,40).forEach(p=>pts.push([p.lat,p.lng]));if(job){facilities.filter(f=>activeCats[f.c]&&routes.get(f.n)).sort((a,b)=>routes.get(a.n).distance-routes.get(b.n).distance).slice(0,3).forEach(f=>pts.push([f.lat,f.lng]))}else facilities.filter(f=>activeCats[f.c]).forEach(f=>pts.push([f.lat,f.lng]));if(pts.length)map.fitBounds(L.latLngBounds(pts).pad(.12),{maxZoom:14})}
 async function useCurrentLocation(){const btn=document.getElementById('myLocation'),status=document.getElementById('jobStatus');if(!navigator.geolocation){status.textContent='This browser does not provide device location.';status.className='map-status error';showToast('Device location is unavailable in this browser.');return}btn.disabled=true;btn.textContent='…';status.textContent='Getting your device location...';navigator.geolocation.getCurrentPosition(async p=>{try{currentHistoryId=null;document.getElementById('jobNotes').value='';const r=await identifyPoint(p.coords.latitude,p.coords.longitude);await setJob(r);map.setView([p.coords.latitude,p.coords.longitude],15)}catch(e){status.textContent=e.message;status.className='map-status error'}finally{btn.disabled=false;btn.textContent='◎'}},e=>{btn.disabled=false;btn.textContent='◎';let msg=e.code===1?'Location permission is blocked. Allow Location for this site in your browser settings.':e.code===2?'Your device could not determine a location. Make sure Location/GPS is turned on.':'Location timed out. Move where the phone has a clearer GPS signal and try again.';if(!window.isSecureContext)msg+=' Device location normally requires an HTTPS page, so test it from GitHub Pages rather than the local file preview.';status.textContent=msg;status.className='map-status error';showToast(msg,5200)},{enableHighAccuracy:true,timeout:18000,maximumAge:30000})}
 function atsExportUrl(){const b=map.getBounds(),z=map.getZoom(),sz=map.getSize();let layers=z>=14?'1,3,5,15,19,20':z>=11?'1,3,15,19':'0,1,7,15';return `${ATS_SERVICE}/export?bbox=${b.getWest()},${b.getSouth()},${b.getEast()},${b.getNorth()}&bboxSR=4326&imageSR=4326&size=${Math.max(300,Math.round(sz.x))},${Math.max(300,Math.round(sz.y))}&format=png32&transparent=true&layers=show:${layers}&dpi=96&f=image`}
