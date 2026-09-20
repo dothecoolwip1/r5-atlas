@@ -80,7 +80,7 @@ jobs:
               'Saved LSD search':'id="savedSearch"',
               'Saved LSD sorting':'id="savedSort"',
               'nearby radius':'id="nearbyRadius"',
-              'Pack 2 version':'content="0.8.0"',
+              'Pack 2 version':'content="0.8.1"',
           }
           combined='\n'.join([html,pack2,device])
           for label,token in pack2_tokens.items():
