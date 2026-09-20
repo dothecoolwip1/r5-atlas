@@ -21,7 +21,7 @@ function makeClusterIcon(kind,count){
 }
 function createMarkerGroup(kind){
   if(markerClusterAvailable)return L.markerClusterGroup({
-    maxClusterRadius:kind==='well'?48:54,
+    maxClusterRadius:zoom=>kind==='well'?(zoom<11?64:48):(zoom<8?84:zoom<11?68:54),
     disableClusteringAtZoom:kind==='well'?15:14,
     showCoverageOnHover:false,
     spiderfyOnMaxZoom:true,
