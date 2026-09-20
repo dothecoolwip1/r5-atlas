@@ -1,10 +1,10 @@
 {
-  "version": "0.5.1",
-  "releasedAt": "2026-09-17",
-  "title": "Testing startup recovery",
+  "version": "0.5.2",
+  "releasedAt": "2026-09-20",
+  "title": "Fast startup recovery",
   "notes": [
-    "Restored the last known working R5 Atlas testing shell after the v0.5.0 hybrid integration caused startup problems on the web app and installed PWA.",
-    "Kept the Alberta Converter v2 offline lookup, history, maps, install support, settings, and managed update system from the working v0.4.0 build.",
-    "Hybrid live fallback changes are temporarily isolated from the testing shell until they pass full browser and installed app validation."
+    "Reduced the testing app startup page from 43.3 MB to about 119 KB so Android Chrome and the installed PWA can open reliably.",
+    "Moved the August 2026 ST37 surface and wellbore snapshot out of the startup page so it loads only when Wells is opened.",
+    "Kept the Alberta Converter v2 lookup, history, maps, install support, settings, and managed update system."
   ]
 }
