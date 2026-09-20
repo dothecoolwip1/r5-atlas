@@ -31,7 +31,7 @@ jobs:
           import { chromium } from 'playwright';
 
           const base='https://dothecoolwip1.github.io/r5-atlas/testing/';
-          const expected='0.10.1';
+          const expected='0.10.4';
           const pid='5070483206';
           const canonical='06-32-048-07 W5M';
           const legacyKey='albertaOilfieldFieldMapHistoryV15';
@@ -103,7 +103,38 @@ jobs:
           await page.waitForFunction(()=>globalThis.R5Pack2Ready && globalThis.R5UniversalSearch && globalThis.R5DeviceStore && globalThis.R5MapUI && globalThis.R5FieldUI);
           await page.evaluate(()=>globalThis.R5Pack2Ready);
 
-          assert((await page.locator('.data-pill').innerText()).includes(expected),'Visible version is not v'+expected);
+          assert(await page.locator('meta[name="r5-app-version"]').getAttribute('content')===expected,'Version meta is not v'+expected);
+          await page.waitForSelector('#r5-settings-gear',{state:'visible',timeout:10000});
+          const mobileUi=await page.evaluate(()=>{
+            const search=document.querySelector('.map-search').getBoundingClientRect();
+            const dock=document.getElementById('facilityCategoryFilters').getBoundingClientRect();
+            const filterTops=[...document.querySelectorAll('#facilityCategoryFilters .filter-chip')].map(x=>x.getBoundingClientRect().top);
+            const mapBox=document.getElementById('mapSection').getBoundingClientRect();
+            const nav=document.querySelector('.mobile-nav').getBoundingClientRect();
+            const gear=document.getElementById('r5-settings-gear').getBoundingClientRect();
+            return{
+              dataPill:getComputedStyle(document.querySelector('.data-pill')).display,
+              fieldToggle:getComputedStyle(document.getElementById('fieldModeToggle')).display,
+              gearParent:document.getElementById('r5-settings-gear').parentElement?.className||'',
+              gearWidth:gear.width,gearHeight:gear.height,gearRight:gear.right,viewportWidth:innerWidth,
+              searchHeight:search.height,
+              dockHeight:dock.height,dockWidth:dock.width,
+              filterTopSpread:Math.max(...filterTops)-Math.min(...filterTops),
+              mapHeight:mapBox.height,mapBottom:mapBox.bottom,navTop:nav.top,
+              clearJobDisplay:getComputedStyle(document.getElementById('clearJob')).display,
+              defaultStatusDisplay:getComputedStyle(document.getElementById('jobStatus')).display,
+            };
+          });
+          assert(mobileUi.dataPill==='none','Mobile header still shows the long version/data pill');
+          assert(mobileUi.fieldToggle==='none','Mobile header still shows the Field Mode button');
+          assert(mobileUi.gearParent.includes('topbar-actions'),'Settings gear is not mounted in the topbar actions');
+          assert(mobileUi.gearWidth>=44 && mobileUi.gearHeight>=44,'Settings gear is below the 44 px touch target');
+          assert(mobileUi.gearRight>=mobileUi.viewportWidth-60,'Settings gear is not aligned to the right side of the phone header');
+          assert(mobileUi.searchHeight<90,'Mobile search surface is still oversized');
+          assert(mobileUi.dockHeight<=46 && mobileUi.dockWidth>300 && mobileUi.filterTopSpread<3,'Disposal filters are not one compact horizontal row');
+          assert(mobileUi.mapHeight>700 && Math.abs(mobileUi.mapBottom-mobileUi.navTop)<=8,'Map does not fill the phone viewport down to navigation');
+          assert(mobileUi.clearJobDisplay==='none','Clear Job is visible before a job exists');
+          assert(mobileUi.defaultStatusDisplay==='none','Default instructional status still inflates the mobile search card');
           assert((await page.locator('#connectionStatus').innerText()).includes('ONLINE'),'Connectivity strip does not show ONLINE');
           assert((await page.locator('#dataSourceStatus').innerText()).includes('AER LIVE'),'Online data status does not show AER LIVE');
           assert((await page.locator('#gpsStatus').innerText()).includes('GPS'),'GPS status chip is missing');
@@ -119,7 +150,9 @@ jobs:
           assert(!(await page.locator('#clearUniversalSearch').isHidden()),'Clear-search control did not appear');
           await page.locator('#findJob').click();
           await page.waitForFunction(()=>document.querySelector('#jobStatus')?.textContent?.includes('Job loaded:'),null,{timeout:60000});
+          await page.waitForFunction(()=>getComputedStyle(document.getElementById('clearJob')).display!=='none');
           assert((await page.locator('#jobDetails').innerText()).includes(canonical),'PID did not resolve to the expected LSD');
+          assert(!(await page.locator('#clearJob').isHidden()),'Clear Job did not appear after an active job was loaded');
 
           assert(!(await page.locator('#navLsdState').isHidden()),'LSD navigation state did not activate');
           assert(!(await page.locator('#navWellsState').isHidden()),'Wells navigation state did not activate');
@@ -232,15 +265,19 @@ jobs:
           assert(!!firstWellLabel,'Well cards do not have meaningful accessible labels');
           const findHeight=await page.locator('#findJob').evaluate(el=>el.getBoundingClientRect().height);
           const clearMinHeight=await page.locator('#clearWellSearch').evaluate(el=>parseFloat(getComputedStyle(el).minHeight)||0);
-          const fieldToggleMinHeight=await page.locator('#fieldModeToggle').evaluate(el=>parseFloat(getComputedStyle(el).minHeight)||0);
-          assert(findHeight>=44 && clearMinHeight>=44 && fieldToggleMinHeight>=44,'Pack 4 controls are below the 44 px touch target minimum');
+          const gearHeight=await page.locator('#r5-settings-gear').evaluate(el=>el.getBoundingClientRect().height);
+          assert(findHeight>=44 && clearMinHeight>=44 && gearHeight>=44,'Pack 4 controls are below the 44 px touch target minimum');
 
-          await page.locator('#fieldModeToggle').click();
-          assert(await page.locator('body').evaluate(el=>el.classList.contains('field-mode')),'Field Mode did not activate');
-          assert((await page.locator('#fieldModeToggle').getAttribute('aria-pressed'))==='true','Field Mode aria state did not activate');
+          await page.locator('#r5-settings-gear').click();
+          await page.waitForSelector('#r5-app-modal');
+          let settingsText=await page.locator('#r5-app-modal').innerText();
+          assert(settingsText.includes('Field Mode'),'Field Mode is not available from phone Settings');
+          await page.locator('#r5-app-modal').getByRole('button',{name:'Field Mode: On',exact:true}).click();
+          await page.waitForFunction(()=>document.body.classList.contains('field-mode') && document.querySelector('#r5-app-modal'));
           assert((await page.evaluate(()=>localStorage.getItem('r5-atlas-field-mode-v1')))==='yes','Field Mode preference was not persisted');
           const fieldHeight=await page.locator('#findJob').evaluate(el=>el.getBoundingClientRect().height);
-          assert(fieldHeight>=50,'Field Mode did not enlarge primary controls');
+          assert(fieldHeight>findHeight,'Field Mode did not enlarge the compact mobile primary control');
+          await page.locator('#r5-app-modal').getByRole('button',{name:'Close',exact:true}).click();
 
           const fieldPage=await context.newPage();
           await fieldPage.goto(base+'?field-persist='+Date.now(),{waitUntil:'domcontentloaded',timeout:120000});
@@ -286,8 +323,9 @@ jobs:
           await page.waitForSelector('#r5-settings-gear',{timeout:10000});
           await page.locator('#r5-settings-gear').click();
           await page.waitForSelector('#r5-app-modal');
-          const settingsText=await page.locator('#r5-app-modal').innerText();
+          settingsText=await page.locator('#r5-app-modal').innerText();
           assert(settingsText.includes('IndexedDB device database'),'Pack 2 device storage disappeared from Settings');
+          assert(settingsText.includes('Field Mode'),'Field Mode disappeared from Settings');
           assert(!settingsText.includes('Coming soon'),'Placeholder settings are visible');
           await page.locator('#r5-app-modal').getByRole('button',{name:'Close',exact:true}).click();
 
@@ -367,8 +405,8 @@ jobs:
           assert(record.visitCount>=3,'Offline PID load did not add a visit');
 
           assert(pageErrors.length===0,'Page errors after offline reload: '+pageErrors.join(' | '));
-          await page.screenshot({path:'pack4-mobile-offline.png',fullPage:true});
+          await page.screenshot({path:'pack4-mobile-ui-offline.png',fullPage:true});
           await browser.close();
-          console.log('Pack 4 live browser verification passed: Pack 3 search/offline behavior plus clustered semantic markers, accessibility targets, Field Mode, tablet landscape and desktop three-panel workspace.');
+          console.log('Pack 4 mobile UI correction passed: clean phone header, compact search, horizontal filters, full-height map, contextual controls, clustered markers, Settings-based Field Mode, tablet/desktop layouts and the full offline regression.');
           JS
           node verify.mjs
