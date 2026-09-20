@@ -1,10 +1,10 @@
 {
-  "version": "0.5.3",
+  "version": "0.5.4",
   "releasedAt": "2026-09-20",
-  "title": "Surface well loading fix",
+  "title": "Updater loop fix",
   "notes": [
-    "Surface wells now query the live AER OneStop well layer for the selected LSD or radius before using the large offline ST37 snapshot.",
-    "Well loading no longer stays indefinitely on the loading message when the legacy ST37 fallback cannot finish.",
-    "The offline ST37 snapshot remains available as a fallback, with a timeout and a clear error if it cannot load."
+    "Fixed the update loop where the app refreshed and immediately asked to install the same update again.",
+    "Synchronized the testing page build number with the release manifest so the installed app can confirm an update completed.",
+    "Includes the new live AER surface well lookup with ST37 fallback and timeout from the previous patch."
   ]
 }
