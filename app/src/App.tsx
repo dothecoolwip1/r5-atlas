@@ -1,6 +1,6 @@
 const modules = [
   ['Converter', 'Single reusable legal-land adapter backed by the authoritative offline ATS pack.'],
-  ['Storage', 'Browser persistence is isolated behind a typed adapter so IndexedDB or native storage can replace it later.'],
+  ['Storage', 'Canonical saved LSD records now use a typed IndexedDB device store, with the key-value adapter retained for lightweight preferences.'],
   ['Providers', 'Network access is isolated behind provider interfaces instead of being scattered through UI code.'],
 ] as const;
 
@@ -10,7 +10,7 @@ export default function App() {
       <p style={{ fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>R5 Atlas</p>
       <h1>React and TypeScript migration workspace</h1>
       <p>
-        Pack 1 establishes typed architecture without replacing the proven field UI before feature parity is verified.
+        Pack 2 adds the canonical device-first saved-location model while the proven field UI remains in service until React feature parity is verified.
       </p>
       <section aria-label="Architecture modules">
         {modules.map(([name, description]) => (
